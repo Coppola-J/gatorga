@@ -3,7 +3,6 @@ module paddle #(
 parameter HRES = 1280,
 parameter VRES = 720,
 
-parameter PADDLE_POS = 20,
 
 parameter PADDLE_W = 200,
 parameter PADDLE_H = 20,
@@ -27,20 +26,16 @@ parameter COLOR = 24'h EFE62E
         output [7:0] pixel [0:2] , 
         
         output active 
-		/* Debug
-		output [ 11 : 0 ] lhpos_out, 
-		output [ 11 : 0 ] rhpos_out, 
-		output [ 11 : 0 ] tvpos_out, 
-		output [ 11 : 0 ] bvpos_out 
-        */
+        
+        
     );
     
     localparam VEL = 16; 
     
     /* NOTE: Put means the paddle is not moving */
-    localparam PUT = 2'b00;
-    localparam LEFT = 2'b01;
-    localparam RIGHT = 2'b10;
+    localparam PUT = 2'h00;
+    localparam LEFT = 2'h01;
+    localparam RIGHT = 2'h10;
     
     
     reg [0 : 2] right_ff  , left_ff ; 
@@ -74,7 +69,7 @@ parameter COLOR = 24'h EFE62E
                 end 
                 
                 register_right <= 1'b0;
-                register_left  <= 1'b0;
+                register_left  <= 1'b0 ;
             end else begin 
                 if (( ~register_right ) && (~register_left)) begin 
                 
@@ -96,31 +91,20 @@ end
 always @ (posedge pixel_clk) 
 begin 
 
-    /* Insert your code for calculating the position of the paddle */ 
+    /* Insert your code for calculating the position of the paddle */
 
     if (rst) begin 
         /* Insert values to reset here */
-        lhpos <= (HRES/2) - (PADDLE_W/2);  
-        rhpos <= (HRES/2) + (PADDLE_W/2);
-        tvpos <= PADDLE_POS - 20;
-        bvpos <= PADDLE_POS; 
-		
     end else begin 
         if (fsync) begin
         /* The below code should only consider directions LEFT and RIGHT. Base this code off the code in Object.sv */
          /* The first paddle should be located at the top of the screen */
-			if (dir == RIGHT) begin 
-				if (lhpos + VEL >= 0 && rhpos + VEL <= 1280) begin
-					lhpos <= lhpos + VEL; 
-					rhpos <= rhpos + VEL;
-				end 
-			end else if (dir == LEFT) begin
-				if (lhpos - VEL >= 0 && rhpos - VEL <= 1280) begin
-				   lhpos <= lhpos - VEL; 
-				   rhpos <= rhpos - VEL;
-				end 
-			end
-		end 
+            if (dir == RIGHT) begin 
+               // ....
+           end 
+           
+           // ....
+       end 
    end 
 end 
 
@@ -133,12 +117,7 @@ end
     assign pixel [ 1 ] = (active) ? COLOR [ 15 : 8 ] : 8 'h00; //green 
     assign pixel [ 0 ] = (active) ? COLOR [ 7 : 0 ] : 8 'h00; //blue 
     
-    /* Debug
-	assign lhpos_out = lhpos; 
-	assign rhpos_out = rhpos;
-	assign tvpos_out = tvpos; 
-	assign bvpos_out = bvpos;
-    */
     
-                        
+                         
+            
 endmodule
