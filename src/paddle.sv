@@ -26,14 +26,13 @@ parameter COLOR = 24'h EFE62E
         input left, 
         output [7:0] pixel [0:2] , 
         
-        output active, 
-		
+        output active 
+		/* Debug
 		output [ 11 : 0 ] lhpos_out, 
 		output [ 11 : 0 ] rhpos_out, 
 		output [ 11 : 0 ] tvpos_out, 
 		output [ 11 : 0 ] bvpos_out 
-        
-        
+        */
     );
     
     localparam VEL = 16; 
@@ -134,10 +133,12 @@ end
     assign pixel [ 1 ] = (active) ? COLOR [ 15 : 8 ] : 8 'h00; //green 
     assign pixel [ 0 ] = (active) ? COLOR [ 7 : 0 ] : 8 'h00; //blue 
     
+    /* Debug
 	assign lhpos_out = lhpos; 
 	assign rhpos_out = rhpos;
 	assign tvpos_out = tvpos; 
 	assign bvpos_out = bvpos;
+    */
     
                         
 endmodule
