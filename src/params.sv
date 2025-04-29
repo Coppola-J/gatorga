@@ -18,7 +18,7 @@ package params;
     parameter RIGHT = 2'h2;                 // Move right
 
     // Ball (object)
-    parameter OBJECT_VEL = 6;    
+    parameter OBJECT_VEL = 0;    
     parameter OBJECT_COLOR = 24'h00FF90;         // Object color (neon green)
     parameter OBJ_SIZE = 50;              // Ball size
     parameter [1:0] DOWN_RIGHT = 2'b00;   // Moving down and right
@@ -32,7 +32,7 @@ package params;
     parameter RESTART_PAUSE = 128;
     parameter COLOR_GMO = 24'hDD4F83;
 
-/*
+
     // Bullet
     parameter int BULLET_W = 4;
     parameter int BULLET_H = 16;
@@ -41,9 +41,9 @@ package params;
 
     // Enemies
     parameter int ENEMY_W = 32;
-    parameter int ENEMY_H = 16;
-    parameter int ENEMY_SPEED = 8;
+    parameter int ENEMY_H = 28;
+    parameter int ENEMY_SPEED = 2;
     parameter logic [23:0] ENEMY_COLOR = 24'h00AAFF; // Blueish
-*/
+    parameter int DROP = 32;
 
 endpackage

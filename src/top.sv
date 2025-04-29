@@ -11,6 +11,7 @@ module top (
     input clk125,                // 125 MHz system clock
     input right,                 // Right button input (move paddle right)
     input left,                  // Left button input (move paddle left)
+    input fire,                  // Fire button input (fire bullet)
 
     // HDMI output signals
     output tmds_tx_clk_p,
@@ -43,6 +44,11 @@ wire [7:0] pixel_obj [0:2];
 // Paddle signals
 wire active_paddle;
 wire [7:0] pixel_paddle [0:2];
+wire signed [11:0] paddle_center_x;
+
+//Bullet signals
+wire [7:0] pixel_bullet [0:2];      // RGB pixel values from gameover controller
+
 
 // Game over control
 wire game_over;                       // Game over active signal
@@ -92,8 +98,42 @@ paddle paddle_inst (
     .right(right),
     .left(left),
     .pixel(pixel_paddle),
-    .active(active_paddle)
+    .active(active_paddle),
+    .paddle_center_x(paddle_center_x)    // <-- NEW
 );
+
+
+//-----------------------------------------------------------------------------
+// Bullet Instantiation
+//-----------------------------------------------------------------------------
+bullet bullet_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst || game_over),
+    .fsync(fsync),
+    .fire(fire),
+    .player_x(paddle_center_x),      // <-- you'll get this from your player ship (center X position)
+    .hpos(hpos),
+    .vpos(vpos),
+    .pixel(pixel_bullet),
+    .active(active_bullet)
+);
+
+//-----------------------------------------------------------------------------
+// Bullet Instantiation
+//-----------------------------------------------------------------------------
+wire [7:0] pixel_alien [0:2];
+wire active_alien;
+
+alien alien_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst || game_over),
+    .fsync(fsync),
+    .hpos(hpos),
+    .vpos(vpos),
+    .pixel(pixel_alien),
+    .active(active_alien)
+);
+
 
 //-----------------------------------------------------------------------------
 // Game Over Controller Instantiation
@@ -111,9 +151,10 @@ gameover_controller gameover_controller_inst (
     .pixel_gameover(pixel_gameover)
 );
 
-// Final RGB pixel mux
-assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] : (pixel_obj[2] | pixel_paddle[2]);
-assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] : (pixel_obj[1] | pixel_paddle[1]);
-assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] : (pixel_obj[0] | pixel_paddle[0]);
+// Final Pixel Output Logic
+assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] : (pixel_obj[2] | pixel_paddle[2] | pixel_bullet[2] | pixel_alien[2]);
+assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] : (pixel_obj[1] | pixel_paddle[1] | pixel_bullet[1] | pixel_alien[1]);
+assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] : (pixel_obj[0] | pixel_paddle[0] | pixel_bullet[0] | pixel_alien[0]);
+
 
 endmodule

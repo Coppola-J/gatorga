@@ -8,28 +8,17 @@
 import params::*;
 
 module paddle (
-    input pixel_clk,                   // Pixel clock
-    input rst,                         // Synchronous reset
-    input fsync,                       // Frame sync (start of new frame)
-
-    input signed [11:0] hpos,           // Current pixel x-coordinate
-    input signed [11:0] vpos,           // Current pixel y-coordinate
-
-    input right,                       // Right button input
-    input left,                        // Left button input
-
-    output [7:0] pixel [0:2],           // Output pixel color (BGR order)
-    output active                      // High when current pixel overlaps paddle
+    input pixel_clk,
+    input rst,
+    input fsync,
+    input signed [11:0] hpos,
+    input signed [11:0] vpos,
+    input right,
+    input left,
+    output [7:0] pixel [0:2],
+    output active,
+    output logic signed [11:0] paddle_center_x   // <-- NEW!
 );
-
-    //-----------------------------------------------------------------------------
-    // Local Parameters
-    //-----------------------------------------------------------------------------
-    localparam PADDLE_VEL = 16;                // Paddle PADDLE_VELocity per frame (in pixels)
-
-    localparam PUT = 2'h0;              // Paddle idle (no movement)
-    localparam LEFT = 2'h1;             // Move left
-    localparam RIGHT = 2'h2;            // Move right
 
     //-----------------------------------------------------------------------------
     // Internal Signals
@@ -103,6 +92,17 @@ module paddle (
                     rhpos <= rhpos - PADDLE_VEL;
                 end
             end
+        end
+    end
+
+    //-----------------------------------------------------------------------------
+    // Paddle Center Calculation
+    //-----------------------------------------------------------------------------
+    always_ff @(posedge pixel_clk) begin
+        if (rst) begin
+            paddle_center_x <= (HRES >> 1);  // Start centered
+        end else if (fsync) begin
+            paddle_center_x <= (lhpos + rhpos) >>> 1; // Center = (left + right) / 2
         end
     end
 
