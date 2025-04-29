@@ -5,15 +5,9 @@
 //   - Calculates paddle position each frame.
 //   - Outputs RGB pixel data if the current screen position overlaps the paddle.
 //-----------------------------------------------------------------------------
+import params::*;
 
-module paddle #(
-    parameter HRES = 1280,             // Horizontal resolution
-    parameter VRES = 720,              // Vertical resolution
-
-    parameter PADDLE_W = 200,           // Paddle width in pixels
-    parameter PADDLE_H = 20,            // Paddle height in pixels
-    parameter COLOR = 24'hEFE62E        // Paddle color (RGB 24-bit)
-)(
+module paddle (
     input pixel_clk,                   // Pixel clock
     input rst,                         // Synchronous reset
     input fsync,                       // Frame sync (start of new frame)
@@ -31,7 +25,7 @@ module paddle #(
     //-----------------------------------------------------------------------------
     // Local Parameters
     //-----------------------------------------------------------------------------
-    localparam VEL = 16;                // Paddle velocity per frame (in pixels)
+    localparam PADDLE_VEL = 16;                // Paddle PADDLE_VELocity per frame (in pixels)
 
     localparam PUT = 2'h0;              // Paddle idle (no movement)
     localparam LEFT = 2'h1;             // Move left
@@ -101,12 +95,12 @@ module paddle #(
         end else begin
             if (fsync) begin
                 // Move paddle based on direction
-                if (dir == RIGHT && rhpos + VEL < HRES) begin // Right movement and if the poostion of the paddle after moving is within the screen
-                    lhpos <= lhpos + VEL;
-                    rhpos <= rhpos + VEL;
-                end else if (dir == LEFT && lhpos - VEL > 0) begin
-                    lhpos <= lhpos - VEL;
-                    rhpos <= rhpos - VEL;
+                if (dir == RIGHT && rhpos + PADDLE_VEL < HRES) begin // Right movement and if the poostion of the paddle after moving is within the screen
+                    lhpos <= lhpos + PADDLE_VEL;
+                    rhpos <= rhpos + PADDLE_VEL;
+                end else if (dir == LEFT && lhpos - PADDLE_VEL > 0) begin
+                    lhpos <= lhpos - PADDLE_VEL;
+                    rhpos <= rhpos - PADDLE_VEL;
                 end
             end
         end
@@ -120,8 +114,8 @@ module paddle #(
     assign active = (hpos >= lhpos && hpos <= rhpos && vpos >= tvpos && vpos <= bvpos) ? 1'b1 : 1'b0;
 
     // Output paddle color if active, otherwise black
-    assign pixel[2] = (active) ? COLOR[23:16] : 8'h00; // Red channel
-    assign pixel[1] = (active) ? COLOR[15:8]  : 8'h00; // Green channel
-    assign pixel[0] = (active) ? COLOR[7:0]   : 8'h00; // Blue channel
+    assign pixel[2] = (active) ? PADDLE_COLOR[23:16] : 8'h00; // Red channel
+    assign pixel[1] = (active) ? PADDLE_COLOR[15:8]  : 8'h00; // Green channel
+    assign pixel[0] = (active) ? PADDLE_COLOR[7:0]   : 8'h00; // Blue channel
 
 endmodule

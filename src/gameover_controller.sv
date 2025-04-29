@@ -1,12 +1,12 @@
-module gameover_controller #(
-    parameter HRES = 1280,
-    parameter VRES = 720,
-    parameter PADDLE_H = 20,
-    parameter GAMEOVER_H = 200,
-    parameter GAMEOVER_VSTART = (VRES - GAMEOVER_H) >> 1,
-    parameter RESTART_PAUSE = 128,
-    parameter COLOR_GMO = 24'hDD4F83
-)(
+//-----------------------------------------------------------------------------
+// Module: gameover_controller
+// Description:
+//   - Displays game over screen when the ball is not in play and 
+//     the paddle is not active.
+//-----------------------------------------------------------------------------
+import params::*;
+
+module gameover_controller (
     input pixel_clk,
     input rst,
     input fsync,
@@ -15,8 +15,8 @@ module gameover_controller #(
     input signed [11:0] hpos,
     input signed [11:0] vpos,
 
-    output logic game_over,             // Game over active
-    output logic use_gameover_pixels,   // Should top use gameover pixels?
+    output logic game_over,                 // Game over active
+    output logic use_gameover_pixels,       // Should top use gameover pixels?
     output logic [7:0] pixel_gameover [0:2] // Game over RGB pixels
 );
 

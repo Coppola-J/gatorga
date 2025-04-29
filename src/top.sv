@@ -5,6 +5,7 @@
 //   - Connects HDMI transmit, ball (object), paddle, and gameover logic
 //   - Combines video outputs and handles game-over detection and pause/restart
 //-----------------------------------------------------------------------------
+import params::*;
 
 module top (
     input clk125,                // 125 MHz system clock
@@ -20,23 +21,6 @@ module top (
     output led_kawser             // Debug LED (always ON)
 );
 
-//-----------------------------------------------------------------------------
-// Local Parameters
-//-----------------------------------------------------------------------------
-localparam HRES = 1280;            // Horizontal resolution
-localparam VRES = 720;             // Vertical resolution
-
-localparam PADDLE_W = 200;         // Paddle width
-localparam PADDLE_H = 20;          // Paddle height
-
-localparam COLOR_OBJ = 24'h00FF90; // Color of the moving object (ball)
-localparam COLOR_PAD = 24'hEFE62E; // Color of the paddle
-localparam COLOR_GMO = 24'hDD4F83; // Color of "Game Over" text
-
-localparam GAMEOVER_H = 200;       // Height of "Game Over" bitmap
-localparam GAMEOVER_VSTART = (VRES - GAMEOVER_H) >> 1; // Center vertical start
-
-localparam RESTART_PAUSE = 128;    // Pause frames before auto restart
 
 //-----------------------------------------------------------------------------
 // Internal Wires and Registers
@@ -86,12 +70,7 @@ hdmi_transmit hdmi_transmit_inst(
 //-----------------------------------------------------------------------------
 // Moving Object (Ball) Instantiation
 //-----------------------------------------------------------------------------
-object #(
-    .HRES(HRES),
-    .VRES(VRES),
-    .COLOR(COLOR_OBJ),
-    .PADDLE_H(PADDLE_H)
-) object_inst (
+object object_inst (
     .pixel_clk(pixel_clk),
     .rst(rst || game_over),
     .fsync(fsync),
@@ -104,13 +83,7 @@ object #(
 //-----------------------------------------------------------------------------
 // Paddle Instantiation
 //-----------------------------------------------------------------------------
-paddle #(
-    .HRES(HRES),
-    .VRES(VRES),
-    .PADDLE_W(PADDLE_W),
-    .PADDLE_H(PADDLE_H),
-    .COLOR(COLOR_PAD)
-) paddle_inst (
+paddle paddle_inst (
     .pixel_clk(pixel_clk),
     .rst(rst || game_over),
     .fsync(fsync),
@@ -125,15 +98,7 @@ paddle #(
 //-----------------------------------------------------------------------------
 // Game Over Controller Instantiation
 //-----------------------------------------------------------------------------
-gameover_controller #(
-    .HRES(HRES),
-    .VRES(VRES),
-    .PADDLE_H(PADDLE_H),
-    .GAMEOVER_H(GAMEOVER_H),
-    .GAMEOVER_VSTART(GAMEOVER_VSTART),
-    .RESTART_PAUSE(RESTART_PAUSE),
-    .COLOR_GMO(COLOR_GMO)
-) gameover_controller_inst (
+gameover_controller gameover_controller_inst (
     .pixel_clk(pixel_clk),
     .rst(rst),
     .fsync(fsync),

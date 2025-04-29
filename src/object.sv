@@ -7,13 +7,9 @@
 //   - No getting stuck at walls.
 //   - No random initial direction (keeps your original reset behavior).
 //////////////////////////////////////////////////////////////////////////////////
+import params::*;
 
-module object #(
-    parameter HRES = 1280,               // Horizontal resolution
-    parameter VRES = 720,                // Vertical resolution
-    parameter COLOR = 24'h00FF90,         // Object color (neon green)
-    parameter PADDLE_H = 20               // Paddle height (bottom zone to avoid)
-)(
+module object (
     input pixel_clk,                     // Pixel clock
     input rst,                            // Synchronous reset
     input fsync,                          // Frame sync pulse
@@ -24,17 +20,6 @@ module object #(
     output [7:0] pixel [0:2],              // Output pixel color (BGR)
     output active                         // High if current pixel overlaps ball
 );
-
-    //-----------------------------------------------------------------------------
-    // Local Parameters
-    //-----------------------------------------------------------------------------
-    localparam OBJ_SIZE = 50;              // Ball size
-    localparam [1:0] DOWN_RIGHT = 2'b00;   // Moving down and right
-    localparam [1:0] DOWN_LEFT  = 2'b01;   // Moving down and left
-    localparam [1:0] UP_RIGHT   = 2'b10;   // Moving up and right
-    localparam [1:0] UP_LEFT    = 2'b11;   // Moving up and left
-
-    localparam VEL = 6;                  // Ball velocity (pixels/frame)
 
     //-----------------------------------------------------------------------------
     // Internal Registers
@@ -54,28 +39,28 @@ module object #(
                 DOWN_RIGHT: begin
                     if (bvpos >= VRES - PADDLE_H) begin
                         dir <= UP_RIGHT;
-                    end else if (rhpos + VEL >= HRES - 1) begin
+                    end else if (rhpos + OBJECT_VEL >= HRES - 1) begin
                         dir <= DOWN_LEFT;
                     end
                 end
                 DOWN_LEFT: begin
                     if (bvpos >= VRES - PADDLE_H) begin
                         dir <= UP_LEFT;
-                    end else if (lhpos - VEL <= 0) begin
+                    end else if (lhpos - OBJECT_VEL <= 0) begin
                         dir <= DOWN_RIGHT;
                     end
                 end
                 UP_RIGHT: begin
-                    if (tvpos - VEL <= 0) begin
+                    if (tvpos - OBJECT_VEL <= 0) begin
                         dir <= DOWN_RIGHT;
-                    end else if (rhpos + VEL >= HRES - 1) begin
+                    end else if (rhpos + OBJECT_VEL >= HRES - 1) begin
                         dir <= UP_LEFT;
                     end
                 end
                 UP_LEFT: begin
-                    if (tvpos - VEL <= 0) begin
+                    if (tvpos - OBJECT_VEL <= 0) begin
                         dir <= DOWN_LEFT;
-                    end else if (lhpos - VEL <= 0) begin
+                    end else if (lhpos - OBJECT_VEL <= 0) begin
                         dir <= UP_RIGHT;
                     end
                 end
@@ -95,28 +80,28 @@ module object #(
         end else if (fsync) begin
             case (dir)
                 DOWN_RIGHT: begin
-                    lhpos <= lhpos + VEL;
-                    rhpos <= rhpos + VEL;
-                    tvpos <= tvpos + VEL;
-                    bvpos <= bvpos + VEL;
+                    lhpos <= lhpos + OBJECT_VEL;
+                    rhpos <= rhpos + OBJECT_VEL;
+                    tvpos <= tvpos + OBJECT_VEL;
+                    bvpos <= bvpos + OBJECT_VEL;
                 end
                 DOWN_LEFT: begin
-                    lhpos <= lhpos - VEL;
-                    rhpos <= rhpos - VEL;
-                    tvpos <= tvpos + VEL;
-                    bvpos <= bvpos + VEL;
+                    lhpos <= lhpos - OBJECT_VEL;
+                    rhpos <= rhpos - OBJECT_VEL;
+                    tvpos <= tvpos + OBJECT_VEL;
+                    bvpos <= bvpos + OBJECT_VEL;
                 end
                 UP_RIGHT: begin
-                    lhpos <= lhpos + VEL;
-                    rhpos <= rhpos + VEL;
-                    tvpos <= tvpos - VEL;
-                    bvpos <= bvpos - VEL;
+                    lhpos <= lhpos + OBJECT_VEL;
+                    rhpos <= rhpos + OBJECT_VEL;
+                    tvpos <= tvpos - OBJECT_VEL;
+                    bvpos <= bvpos - OBJECT_VEL;
                 end
                 UP_LEFT: begin
-                    lhpos <= lhpos - VEL;
-                    rhpos <= rhpos - VEL;
-                    tvpos <= tvpos - VEL;
-                    bvpos <= bvpos - VEL;
+                    lhpos <= lhpos - OBJECT_VEL;
+                    rhpos <= rhpos - OBJECT_VEL;
+                    tvpos <= tvpos - OBJECT_VEL;
+                    bvpos <= bvpos - OBJECT_VEL;
                 end
             endcase
         end
@@ -127,8 +112,8 @@ module object #(
     //-----------------------------------------------------------------------------
     assign active = (hpos >= lhpos && hpos <= rhpos && vpos >= tvpos && vpos <= bvpos) ? 1'b1 : 1'b0;
 
-    assign pixel[2] = (active) ? COLOR[23:16] : 8'h00; // Red
-    assign pixel[1] = (active) ? COLOR[15:8]  : 8'h00; // Green
-    assign pixel[0] = (active) ? COLOR[7:0]   : 8'h00; // Blue
+    assign pixel[2] = (active) ? OBJECT_COLOR[23:16] : 8'h00; // Red
+    assign pixel[1] = (active) ? OBJECT_COLOR[15:8]  : 8'h00; // Green
+    assign pixel[0] = (active) ? OBJECT_COLOR[7:0]   : 8'h00; // Blue
 
 endmodule
