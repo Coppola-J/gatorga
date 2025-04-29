@@ -1,123 +1,127 @@
-module paddle #( 
+//-----------------------------------------------------------------------------
+// Module: paddle
+// Description:
+//   - Controls player paddle movement based on button inputs (left, right).
+//   - Calculates paddle position each frame.
+//   - Outputs RGB pixel data if the current screen position overlaps the paddle.
+//-----------------------------------------------------------------------------
 
-parameter HRES = 1280,
-parameter VRES = 720,
+module paddle #(
+    parameter HRES = 1280,             // Horizontal resolution
+    parameter VRES = 720,              // Vertical resolution
 
+    parameter PADDLE_W = 200,           // Paddle width in pixels
+    parameter PADDLE_H = 20,            // Paddle height in pixels
+    parameter COLOR = 24'hEFE62E        // Paddle color (RGB 24-bit)
+)(
+    input pixel_clk,                   // Pixel clock
+    input rst,                         // Synchronous reset
+    input fsync,                       // Frame sync (start of new frame)
 
-parameter PADDLE_W = 200,
-parameter PADDLE_H = 20,
-parameter COLOR = 24'h EFE62E
-)
+    input signed [11:0] hpos,           // Current pixel x-coordinate
+    input signed [11:0] vpos,           // Current pixel y-coordinate
 
+    input right,                       // Right button input
+    input left,                        // Left button input
 
+    output [7:0] pixel [0:2],           // Output pixel color (BGR order)
+    output active                      // High when current pixel overlaps paddle
+);
 
+    //-----------------------------------------------------------------------------
+    // Local Parameters
+    //-----------------------------------------------------------------------------
+    localparam VEL = 16;                // Paddle velocity per frame (in pixels)
 
-    (
-        input pixel_clk,
-        input rst,
-        input fsync, 
-        
-        input signed [11:0] hpos, 
-        input signed [11:0] vpos, 
-        
-        
-        input right, 
-        input left, 
-        output [7:0] pixel [0:2] , 
-        
-        output active 
-        
-        
-    );
-    
-    localparam VEL = 16; 
-    
-    /* NOTE: Put means the paddle is not moving */
-    localparam PUT = 2'h00;
-    localparam LEFT = 2'h01;
-    localparam RIGHT = 2'h10;
-    
-    
-    reg [0 : 2] right_ff  , left_ff ; 
-    
-    reg signed [ 11 : 0 ] lhpos; 
-    reg signed [ 11 : 0 ] rhpos; 
-    reg signed [ 11 : 0 ] tvpos; 
-    reg signed [ 11 : 0 ] bvpos; 
-    
-    
-    reg [ 1 : 0 ] dir; 
-    
-    reg register_right, register_left ; 
-    
-    
-    always @(posedge pixel_clk) 
-    
-    begin 
-        if(rst) begin 
-            dir <= PUT ; 
-            register_right <= 1'b0; 
+    localparam PUT = 2'h0;              // Paddle idle (no movement)
+    localparam LEFT = 2'h1;             // Move left
+    localparam RIGHT = 2'h2;            // Move right
+
+    //-----------------------------------------------------------------------------
+    // Internal Signals
+    //-----------------------------------------------------------------------------
+    reg [0:2] right_ff, left_ff;         // Button debounce shift registers
+
+    reg signed [11:0] lhpos;             // Left x-boundary of paddle
+    reg signed [11:0] rhpos;             // Right x-boundary of paddle
+    reg signed [11:0] tvpos;             // Top y-boundary of paddle
+    reg signed [11:0] bvpos;             // Bottom y-boundary of paddle
+
+    reg [1:0] dir;                       // Current paddle movement direction
+    reg register_right, register_left;   // Latches for right/left button events
+
+    //-----------------------------------------------------------------------------
+    // Paddle Movement Direction Control
+    //-----------------------------------------------------------------------------
+    always @(posedge pixel_clk) begin
+        if (rst) begin
+            dir <= PUT;
+            register_right <= 1'b0;
             register_left <= 1'b0;
-        end else begin 
-            if (fsync) begin 
-                if (register_right) begin 
-                    dir <= RIGHT ; 
-                end else if (register_left) begin 
-                    dir <= LEFT ; 
-                end else begin 
-                    dir <= PUT ; 
-                end 
-                
+        end else begin
+            if (fsync) begin
+                // Update direction on frame sync
+                if (register_right) begin
+                    dir <= RIGHT;
+                end else if (register_left) begin
+                    dir <= LEFT;
+                end else begin
+                    dir <= PUT;
+                end
+                // Clear registers for next frame
                 register_right <= 1'b0;
-                register_left  <= 1'b0 ;
-            end else begin 
-                if (( ~register_right ) && (~register_left)) begin 
-                
-                    if (right_ff [2] ) begin 
-                        register_right <= 1'b1; 
-                    end else if (left_ff [ 2 ] ) begin 
-                        register_left <= 1'b1; 
-                    end 
-               end 
-           end 
-       end 
-       
-       right_ff <= {right, right_ff [ 0 : 1 ] } ; 
-       left_ff <= {left, left_ff [ 0 : 1 ] } ; 
-       
-end                     
+                register_left <= 1'b0;
+            end else begin
+                // Capture button presses during the frame
+                if (~register_right && ~register_left) begin
+                    if (right_ff[2]) begin
+                        register_right <= 1'b1;
+                    end else if (left_ff[2]) begin
+                        register_left <= 1'b1;
+                    end
+                end
+            end
+        end
 
+        // Debounce button inputs
+        right_ff <= {right, right_ff[0:1]};
+        left_ff <= {left, left_ff[0:1]};
+    end
 
-always @ (posedge pixel_clk) 
-begin 
+    //-----------------------------------------------------------------------------
+    // Paddle Position Update
+    //-----------------------------------------------------------------------------
+    always @(posedge pixel_clk) begin
+        if (rst) begin
+            // Center paddle at start
+            lhpos <= (HRES - PADDLE_W) >> 1;
+            rhpos <= (HRES + PADDLE_W) >> 1;
+            tvpos <= VRES - PADDLE_H;     // Near bottom of screen
+            bvpos <= VRES - 1;
+        end else begin
+            if (fsync) begin
+                // Move paddle based on direction
+                if (dir == RIGHT && rhpos + VEL < HRES) begin // Right movement and if the poostion of the paddle after moving is within the screen
+                    lhpos <= lhpos + VEL;
+                    rhpos <= rhpos + VEL;
+                end else if (dir == LEFT && lhpos - VEL > 0) begin
+                    lhpos <= lhpos - VEL;
+                    rhpos <= rhpos - VEL;
+                end
+            end
+        end
+    end
 
-    /* Insert your code for calculating the position of the paddle */
+    //-----------------------------------------------------------------------------
+    // Video Output (Active Pixel Detection + Coloring)
+    //-----------------------------------------------------------------------------
 
-    if (rst) begin 
-        /* Insert values to reset here */
-    end else begin 
-        if (fsync) begin
-        /* The below code should only consider directions LEFT and RIGHT. Base this code off the code in Object.sv */
-         /* The first paddle should be located at the top of the screen */
-            if (dir == RIGHT) begin 
-               // ....
-           end 
-           
-           // ....
-       end 
-   end 
-end 
+    // Active if current pixel is inside paddle bounds
+    assign active = (hpos >= lhpos && hpos <= rhpos && vpos >= tvpos && vpos <= bvpos) ? 1'b1 : 1'b0;
 
-    /* Active calculates whether the current pixel being updated by the HDMI controller is within the bounds of the ball's */
-    /* Simple Example: If the ball is located at position 0,0 and vpos and rpos = 0, active will be high, placing a green pixel */
-    assign active = (hpos >= lhpos && hpos <= rhpos && vpos >= tvpos && vpos <= bvpos ) ? 1'b1 : 1'b0 ; 
-    
-    /* If active is high, set the RGB values for neon green */
-    assign pixel [ 2 ] = (active) ? COLOR [ 23 : 16 ] : 8 'h00; //red 
-    assign pixel [ 1 ] = (active) ? COLOR [ 15 : 8 ] : 8 'h00; //green 
-    assign pixel [ 0 ] = (active) ? COLOR [ 7 : 0 ] : 8 'h00; //blue 
-    
-    
-                         
-            
+    // Output paddle color if active, otherwise black
+    assign pixel[2] = (active) ? COLOR[23:16] : 8'h00; // Red channel
+    assign pixel[1] = (active) ? COLOR[15:8]  : 8'h00; // Green channel
+    assign pixel[0] = (active) ? COLOR[7:0]   : 8'h00; // Blue channel
+
 endmodule

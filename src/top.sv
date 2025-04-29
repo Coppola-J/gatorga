@@ -1,260 +1,154 @@
-module top ( 
-    input clk125, 
-    input right,
-    input left, 
-    
-    output tmds_tx_clk_p, 
+//-----------------------------------------------------------------------------
+// Module: top
+// Description: 
+//   - Top-level system for Pong game on FPGA
+//   - Connects HDMI transmit, ball (object), paddle, and gameover logic
+//   - Combines video outputs and handles game-over detection and pause/restart
+//-----------------------------------------------------------------------------
+
+module top (
+    input clk125,                // 125 MHz system clock
+    input right,                 // Right button input (move paddle right)
+    input left,                  // Left button input (move paddle left)
+
+    // HDMI output signals
+    output tmds_tx_clk_p,
     output tmds_tx_clk_n,
-    
-    output [2:0] tmds_tx_data_p, 
+    output [2:0] tmds_tx_data_p,
     output [2:0] tmds_tx_data_n,
-    output led_kawser 
-    
-    ); 
-    
-    
-    localparam HRES = 1280; 
-    localparam VRES = 720; 
-    
-    
-    localparam PADDLE_W = 200;
-    localparam PADDLE_H = 20; 
-    
-    localparam COLOR_OBJ = 24'h 00FF90; 
-    localparam COLOR_PAD = 24'h EFE62E; 
-    localparam COLOR_GMO = 24'h DD4F83; 
-    
-    
-    localparam GAMEOVER_H = 200; 
-    
-    localparam GAMEOVER_VSTART = (VRES - GAMEOVER_H) >> 1 ; 
-    
-    
-    localparam RESTART_PAUSE = 128 ;
-    
-    
-    wire pixel_clk; 
-    
-    wire rst ; 
-    
-    wire active ; 
-    
-    wire fsync; 
-    
-    wire signed [11:0] hpos; 
-    
-    wire signed [11:0] vpos; 
-    
-    wire [7:0] pixel [0 : 2 ] ; 
-    
-    
-    wire active_obj ; 
-    
-    
-    reg active_passing ; 
-    wire [7 : 0 ] pixel_obj [0:2] ;
-    
-    
-    wire active_paddle; 
-    wire [7 : 0 ] pixel_paddle [0:2] ;
-    
-    
-    reg game_over_eval, evaluate ; 
-    reg game_over; 
-    reg [7 : 0 ] pause ; 
-    
-    
-    wire [HRES-1 : 0] bitmap ; 
-    
-    wire active_gameover ; 
-    wire bitmap_on; 
-    wire [7:0] pixel_gameover [0:2] ; 
-    
-    /* Add Scoreboard Instantiation Here */
-    
-    /* Add Top Paddle Instantiation Here */
-    
-    
-    // HDMIT Transmit + clock video timing 
-    hdmi_transmit hdmi_transmit_inst ( 
-    
-        .clk125         (clk125), 
-        .pixel          (pixel), 
-        
-        
-        // Shared video interface to the rest of the system 
-        
-        .pixel_clk      (pixel_clk), 
-        .rst            (rst),
-        .active         (active),
-        .fsync          (fsync),
-        .hpos           (hpos),
-        .vpos           (vpos), 
-        
-        .tmds_tx_clk_p  (tmds_tx_clk_p),  
-        .tmds_tx_clk_n  (tmds_tx_clk_n),
-    
-        .tmds_tx_data_p (tmds_tx_data_p), 
-        .tmds_tx_data_n (tmds_tx_data_n)
-        
-     ); 
-     
-     
-     
-     
-     
-     // Handle Bounce 
-     object #( 
 
- .HRES      (HRES),
- .VRES      (VRES),
- .COLOR     (COLOR_OBJ),
- .PADDLE_H  (PADDLE_H) 
-)
+    output led_kawser             // Debug LED (always ON)
+);
 
-object_inst
+//-----------------------------------------------------------------------------
+// Local Parameters
+//-----------------------------------------------------------------------------
+localparam HRES = 1280;            // Horizontal resolution
+localparam VRES = 720;             // Vertical resolution
 
+localparam PADDLE_W = 200;         // Paddle width
+localparam PADDLE_H = 20;          // Paddle height
 
-    (
-       .pixel_clk   (pixel_clk),
-       .rst         (rst || game_over),
-       .fsync       (fsync),  
-       .hpos        (hpos), 
-       .vpos        (vpos), 
-       .pixel       (pixel_obj) , 
-       .active      (active_obj)
-        
-        
-    );
-     
-      
-        
-         paddle #( 
+localparam COLOR_OBJ = 24'h00FF90; // Color of the moving object (ball)
+localparam COLOR_PAD = 24'hEFE62E; // Color of the paddle
+localparam COLOR_GMO = 24'hDD4F83; // Color of "Game Over" text
 
- .HRES      (HRES),
- .VRES      (VRES),
- .PADDLE_W  (PADDLE_W),
- .PADDLE_H  (PADDLE_H),
- .COLOR     (COLOR_PAD)
-  
-)
+localparam GAMEOVER_H = 200;       // Height of "Game Over" bitmap
+localparam GAMEOVER_VSTART = (VRES - GAMEOVER_H) >> 1; // Center vertical start
 
-paddle_inst
+localparam RESTART_PAUSE = 128;    // Pause frames before auto restart
 
+//-----------------------------------------------------------------------------
+// Internal Wires and Registers
+//-----------------------------------------------------------------------------
+wire pixel_clk;                   // Pixel clock from HDMI transmitter
+wire rst;                          // Reset signal
+wire active;                       // Active video region
+wire fsync;                        // Frame sync pulse
 
-    (
-       .pixel_clk   (pixel_clk),
-       .rst         (rst || game_over),
-       .fsync       (fsync),  
-       .hpos        (hpos), 
-       .vpos        (vpos), 
-       
-       .right       (right),
-       .left        (left), 
-       
-       
-       .pixel       (pixel_paddle) , 
-       .active      (active_paddle)
-        
-        
-    );
-     
-      
-  
-  gameover_bitmap gameover_bitmap_inst ( 
-  
-        .clka           (pixel_clk),
-        .ena            (1'b1),
-        .addra          (vpos [7:0]),
-        .douta          (bitmap)
-        
-       ); 
-       
-       
-    
-    // GAME OVER Pixel active, middle of the screen 
-    assign active_gameover = (game_over && vpos >= GAMEOVER_VSTART  && vpos < GAMEOVER_VSTART + GAMEOVER_H)  ? 1'b1 : 1'b0 ; 
-    
-    assign bitmap_on = (bitmap >> hpos) & 1'b1; 
-    
-    // RGB pixels for pop up game 
-    assign pixel_gameover [2] = (active_gameover && bitmap_on) ? COLOR_GMO [23 : 16] : 8'h00; 
-    assign pixel_gameover [1] = (active_gameover && bitmap_on) ? COLOR_GMO [15 : 8] : 8'h00; 
-    assign pixel_gameover [0] = (active_gameover && bitmap_on) ? COLOR_GMO [7 : 0] : 8'h00; 
-    
-    
-    // Display RGB pixels 
-    
-    assign pixel [2] = game_over ? pixel_gameover [2] : pixel_obj [ 2 ] | pixel_paddle [ 2 ] ;
-    assign pixel [1] = game_over ? pixel_gameover [1] : pixel_obj [ 1 ] | pixel_paddle [ 1 ] ;
-    assign pixel [0] = game_over ? pixel_gameover [0] : pixel_obj [ 0 ] | pixel_paddle [ 0 ] ;
-       
-       assign led_kawser = 1; 
-     
-     // We need to detect gameover 
-     
-     
-     always @(posedge pixel_clk)
-     
-     begin 
-        
-        
-        
-        if(rst) begin 
-        
-            game_over               <= 1'b0; 
-            game_over_eval          <= 1'b0; 
-            evaluate                <= 1'b0;
-            pause                   <= 0;
-            active_passing          <= 1'b0; 
-            
-             
-        
-        end else begin   
-            
-            
-            if(~evaluate) begin 
-                if(fsync) begin 
-                       evaluate <= 1'b1; 
-                end;
-                pause                   <= 0;
-                active_passing          <= 1'b0; 
-            
-            end else begin 
-                if(~game_over_eval) begin 
-                    if(vpos == VRES - PADDLE_H && active_obj) begin 
-                         active_passing          <= 1'b1; 
-                         if (active_paddle) begin 
-                               evaluate                <= 1'b0;
-                         end
-                    
-                    end else if (active_passing) begin 
-                        if(~active_obj) begin 
-                              game_over_eval          <= 1'b1; 
-                        end
-                    end
-                end else if (fsync) begin 
-                    if(pause == RESTART_PAUSE) begin
-                        game_over_eval          <= 1'b0;
-                        evaluate                <= 1'b0; 
-                        game_over               <= 1'b0; 
-                    end else begin 
-                        pause                   <= pause + 1; 
-                        game_over               <= 1'b1; 
-                    
-                    end
-                
-                
-                end
-                
-                
-                
-        
-        end 
-     end 
-end 
+wire signed [11:0] hpos;           // Current horizontal pixel position
+wire signed [11:0] vpos;           // Current vertical line position
 
+wire [7:0] pixel [0:2];             // Final RGB output pixel (blue, green, red)
 
-endmodule 
+// Object (ball) signals
+wire active_obj;
+reg active_passing;
+wire [7:0] pixel_obj [0:2];
 
-    
+// Paddle signals
+wire active_paddle;
+wire [7:0] pixel_paddle [0:2];
+
+// Game over control
+wire game_over;                       // Game over active signal
+wire use_gameover_pixels;             // Whether to override with game over pixels
+wire [7:0] pixel_gameover [0:2];      // RGB pixel values from gameover controller
+
+//-----------------------------------------------------------------------------
+// HDMI Transmitter Instantiation
+//-----------------------------------------------------------------------------
+hdmi_transmit hdmi_transmit_inst(
+    .clk125(clk125),
+    .pixel(pixel),
+    .pixel_clk(pixel_clk),
+    .rst(rst),
+    .active(active),
+    .fsync(fsync),
+    .hpos(hpos),
+    .vpos(vpos),
+    .tmds_tx_clk_p(tmds_tx_clk_p),
+    .tmds_tx_clk_n(tmds_tx_clk_n),
+    .tmds_tx_data_p(tmds_tx_data_p),
+    .tmds_tx_data_n(tmds_tx_data_n)
+);
+
+//-----------------------------------------------------------------------------
+// Moving Object (Ball) Instantiation
+//-----------------------------------------------------------------------------
+object #(
+    .HRES(HRES),
+    .VRES(VRES),
+    .COLOR(COLOR_OBJ),
+    .PADDLE_H(PADDLE_H)
+) object_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst || game_over),
+    .fsync(fsync),
+    .hpos(hpos),
+    .vpos(vpos),
+    .pixel(pixel_obj),
+    .active(active_obj)
+);
+
+//-----------------------------------------------------------------------------
+// Paddle Instantiation
+//-----------------------------------------------------------------------------
+paddle #(
+    .HRES(HRES),
+    .VRES(VRES),
+    .PADDLE_W(PADDLE_W),
+    .PADDLE_H(PADDLE_H),
+    .COLOR(COLOR_PAD)
+) paddle_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst || game_over),
+    .fsync(fsync),
+    .hpos(hpos),
+    .vpos(vpos),
+    .right(right),
+    .left(left),
+    .pixel(pixel_paddle),
+    .active(active_paddle)
+);
+
+//-----------------------------------------------------------------------------
+// Game Over Controller Instantiation
+//-----------------------------------------------------------------------------
+gameover_controller #(
+    .HRES(HRES),
+    .VRES(VRES),
+    .PADDLE_H(PADDLE_H),
+    .GAMEOVER_H(GAMEOVER_H),
+    .GAMEOVER_VSTART(GAMEOVER_VSTART),
+    .RESTART_PAUSE(RESTART_PAUSE),
+    .COLOR_GMO(COLOR_GMO)
+) gameover_controller_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst),
+    .fsync(fsync),
+    .active_obj(active_obj),
+    .active_paddle(active_paddle),
+    .hpos(hpos),
+    .vpos(vpos),
+    .game_over(game_over),
+    .use_gameover_pixels(use_gameover_pixels),
+    .pixel_gameover(pixel_gameover)
+);
+
+// Final RGB pixel mux
+assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] : (pixel_obj[2] | pixel_paddle[2]);
+assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] : (pixel_obj[1] | pixel_paddle[1]);
+assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] : (pixel_obj[0] | pixel_paddle[0]);
+
+endmodule
