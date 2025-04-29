@@ -106,20 +106,27 @@ paddle paddle_inst (
 //-----------------------------------------------------------------------------
 // Bullet Instantiation
 //-----------------------------------------------------------------------------
+wire signed [11:0] bullet_center_x;
+wire signed [11:0] bullet_top_y;
+
+
 bullet bullet_inst (
     .pixel_clk(pixel_clk),
     .rst(rst || game_over),
     .fsync(fsync),
     .fire(fire),
-    .player_x(paddle_center_x),      // <-- you'll get this from your player ship (center X position)
+    .player_x(paddle_center_x),  // Already wired from paddle
     .hpos(hpos),
     .vpos(vpos),
     .pixel(pixel_bullet),
-    .active(active_bullet)
+    .active(active_bullet),
+    .bullet_center_x(bullet_center_x),
+    .bullet_top_y(bullet_top_y)
 );
 
+
 //-----------------------------------------------------------------------------
-// Bullet Instantiation
+// Alien Instantiation
 //-----------------------------------------------------------------------------
 wire [7:0] pixel_alien [0:2];
 wire active_alien;
@@ -130,9 +137,14 @@ alien alien_inst (
     .fsync(fsync),
     .hpos(hpos),
     .vpos(vpos),
+    .bullet_x(bullet_center_x),
+    .bullet_y(bullet_top_y),
+    .bullet_active(active_bullet),
     .pixel(pixel_alien),
-    .active(active_alien)
+    .active(active_alien),
+    .alien_alive(alien_alive)
 );
+
 
 
 //-----------------------------------------------------------------------------
