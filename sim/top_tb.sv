@@ -2,19 +2,16 @@
 
 module top_tb;
 
-    // Testbench signals
+    // Inputs to the top-level DUT
     logic clk125;
-    logic right;
-    logic left;
-    logic fire;
+    logic right, left, fire;
 
-    logic tmds_tx_clk_p;
-    logic tmds_tx_clk_n;
-    logic [2:0] tmds_tx_data_p;
-    logic [2:0] tmds_tx_data_n;
+    // Outputs (HDMI signals are not used in sim, but must be wired)
+    logic tmds_tx_clk_p, tmds_tx_clk_n;
+    logic [2:0] tmds_tx_data_p, tmds_tx_data_n;
     logic led_kawser;
 
-    // Instantiate your top-level DUT
+    // Instantiate the DUT (top-level game module)
     top uut (
         .clk125(clk125),
         .right(right),
@@ -27,36 +24,29 @@ module top_tb;
         .led_kawser(led_kawser)
     );
 
-    // Clock generation
+    // Clock Generation (125 MHz)
     initial clk125 = 0;
-    always #4 clk125 = ~clk125; // 125 MHz clock = 8ns period
+    always #4 clk125 = ~clk125;
 
+    // Stimulus
     initial begin
-        // Initialize Inputs
+        // Initial values
         right = 0;
-        left = 0;
+        left  = 0;
+        fire  = 0;
+        
+        // Wait some cycles for reset and paddle positioning
+        repeat (1000) @(posedge clk125);
+
+        // Fire once — assumes paddle is already centered
+        fire = 1;
+        @(posedge clk125);
         fire = 0;
 
-        // Now controlled inside clock cycles
-        repeat (100000) begin
-            @(posedge clk125);
+        // Let bullet fly and simulate enough for possible alien hit
+        repeat (100_000) @(posedge clk125);
 
-            if ($time > 200 && $time < 400) begin
-                right <= 1;
-            end else if ($time >= 400 && $time < 600) begin
-                right <= 0;
-                left <= 1;
-            end else if ($time >= 600 && $time < 800) begin
-                left <= 0;
-            end
-
-            if ($time >= 800 && $time < 820) begin
-                fire <= 1;
-            end else if ($time >= 820) begin
-                fire <= 0;
-            end
-        end
-
+        $display("Simulation complete.");
         $finish;
     end
 

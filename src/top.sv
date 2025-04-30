@@ -19,7 +19,8 @@ module top (
     output [2:0] tmds_tx_data_p,
     output [2:0] tmds_tx_data_n,
 
-    output led_kawser             // Debug LED (always ON)
+    // Debug LED output
+    output debug [0:3]
 );
 
 
@@ -48,6 +49,20 @@ wire signed [11:0] paddle_center_x;
 
 //Bullet signals
 wire [7:0] pixel_bullet [0:2];      // RGB pixel values from gameover controller
+wire bullet_active;                // Bullet is currently being drawn
+wire signed [11:0] bullet_center_x;
+wire signed [11:0] bullet_top_y;
+wire signed [11:0] bullet_left, bullet_right, bullet_top, bullet_bottom;
+
+// Alien signals
+wire alien_hit;
+wire [7:0] pixel_alien [0:2];
+wire active_alien;
+wire alien_alive;                  // Indicates if the alien is alive
+wire signed [11:0] alien_lhpos;   // Left x-boundary of alien
+wire signed [11:0] alien_rhpos;   // Right x-boundary of alien
+wire signed [11:0] alien_tvpos;   // Top y-boundary of alien
+wire signed [11:0] alien_bvpos;   // Bottom y-boundary of alien
 
 
 // Game over control
@@ -104,48 +119,83 @@ paddle paddle_inst (
 
 
 //-----------------------------------------------------------------------------
-// Bullet Instantiation
+// Bullet Instantiation (now with bounding box + active)
 //-----------------------------------------------------------------------------
-wire signed [11:0] bullet_center_x;
-wire signed [11:0] bullet_top_y;
-
-
 bullet bullet_inst (
     .pixel_clk(pixel_clk),
     .rst(rst || game_over),
     .fsync(fsync),
     .fire(fire),
-    .player_x(paddle_center_x),  // Already wired from paddle
+    .player_x(paddle_center_x),
     .hpos(hpos),
     .vpos(vpos),
+
     .pixel(pixel_bullet),
-    .active(active_bullet),
-    .bullet_center_x(bullet_center_x),
-    .bullet_top_y(bullet_top_y)
+
+    // Collision box outputs
+    .bullet_active(bullet_active),
+    .bullet_left(bullet_left),
+    .bullet_right(bullet_right),
+    .bullet_top(bullet_top),
+    .bullet_bottom(bullet_bottom)
 );
+
 
 
 //-----------------------------------------------------------------------------
 // Alien Instantiation
 //-----------------------------------------------------------------------------
-wire [7:0] pixel_alien [0:2];
-wire active_alien;
-
 alien alien_inst (
     .pixel_clk(pixel_clk),
     .rst(rst || game_over),
     .fsync(fsync),
     .hpos(hpos),
     .vpos(vpos),
-    .bullet_x(bullet_center_x),
-    .bullet_y(bullet_top_y),
-    .bullet_active(active_bullet),
+    .alien_hit_external(alien_hit),         // << connect from detector
     .pixel(pixel_alien),
     .active(active_alien),
-    .alien_alive(alien_alive)
+    .alien_alive(alien_alive),
+    .lhpos(alien_lhpos),
+    .rhpos(alien_rhpos),
+    .tvpos(alien_tvpos),
+    .bvpos(alien_bvpos)
 );
 
+//-----------------------------------------------------------------------------
+// Alien Instantiation
+//-----------------------------------------------------------------------------
 
+/*
+wire bullet_left;
+wire bullet_right;
+wire bullet_top;
+wire bullet_bottom;
+
+assign bullet_left   = bullet_center_x - (BULLET_W >> 1);
+assign bullet_right  = bullet_center_x + (BULLET_W >> 1);
+assign bullet_top    = bullet_top_y;
+assign bullet_bottom = bullet_top_y + BULLET_H;
+*/
+
+collision_controller collision_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst),
+    .fsync(fsync),
+    .bullet_active(bullet_active),
+    .alien_alive(alien_alive),
+
+    .bullet_left(bullet_left),
+    .bullet_right(bullet_right),
+    .bullet_top(bullet_top),
+    .bullet_bottom(bullet_bottom),
+
+    .alien_lhpos(alien_lhpos),
+    .alien_rhpos(alien_rhpos),
+    .alien_tvpos(alien_tvpos),
+    .alien_bvpos(alien_bvpos),
+
+    .alien_hit(alien_hit)
+);
 
 //-----------------------------------------------------------------------------
 // Game Over Controller Instantiation
@@ -163,7 +213,20 @@ gameover_controller gameover_controller_inst (
     .pixel_gameover(pixel_gameover)
 );
 
-// Final Pixel Output Logic
+//-----------------------------------------------------------------------------
+// Debug
+//-----------------------------------------------------------------------------
+
+wire debug [0:2];
+assign debug[0] = bullet_active;
+assign debug[1] = alien_hit;
+assign debug[2] = alien_alive;
+assign debug[3] = (bullet_left < alien_rhpos);
+
+
+//-----------------------------------------------------------------------------
+// Final Pixel Output
+//-----------------------------------------------------------------------------
 assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] : (pixel_obj[2] | pixel_paddle[2] | pixel_bullet[2] | pixel_alien[2]);
 assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] : (pixel_obj[1] | pixel_paddle[1] | pixel_bullet[1] | pixel_alien[1]);
 assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] : (pixel_obj[0] | pixel_paddle[0] | pixel_bullet[0] | pixel_alien[0]);

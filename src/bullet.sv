@@ -5,22 +5,26 @@ module bullet (
     input pixel_clk,
     input rst,
     input fsync,
-    input fire,                        // Fire button input
-    input signed [11:0] player_x,       // Player ship X position (center)
-    input signed [11:0] hpos,           // Current pixel horizontal position
-    input signed [11:0] vpos,           // Current pixel vertical position
+    input fire,                                     // Fire button input
+    input signed [11:0] player_x,                   // Player ship X position (center)
+    input signed [11:0] hpos,                       // Current pixel horizontal position
+    input signed [11:0] vpos,                       // Current pixel vertical position
 
-    output [7:0] pixel [0:2],            // RGB pixel output
-    output active,                      // Bullet is currently being drawn
-    output logic signed [11:0] bullet_center_x, // Bullet X position (for collision detection)
-    output logic signed [11:0] bullet_top_y      // Bullet Y position (for collision detection)
+    output [7:0] pixel [0:2],                       // RGB pixel output                         // Bullet is currently being drawn
+
+    // Collision detection outputs
+    output logic bullet_active,                     // Whether bullet is flying
+    output logic signed [11:0] bullet_left,
+    output logic signed [11:0] bullet_right,
+    output logic signed [11:0] bullet_top,
+    output logic signed [11:0] bullet_bottom
 );
 
     //-----------------------------------------------------------------------------
     // Internal Registers
     //-----------------------------------------------------------------------------
-    reg active_bullet;
     reg signed [11:0] bullet_x, bullet_y;
+    wire active;                             // Active bullet
 
     reg [0:2] fire_ff;                  // Debounce shift register
     reg fire_latched;                   // Latch to detect single fire press
@@ -40,7 +44,7 @@ module bullet (
             end
 
             if (fsync) begin
-                fire_latched <= 1'b0; // Clear latch at frame boundary
+                fire_latched <= 1'b0; // Clear latch each frame
             end
         end
     end
@@ -50,18 +54,18 @@ module bullet (
     //-----------------------------------------------------------------------------
     always_ff @(posedge pixel_clk) begin
         if (rst) begin
-            active_bullet <= 1'b0;
+            bullet_active <= 1'b0;
             bullet_x <= 0;
             bullet_y <= 0;
         end else if (fsync) begin
-            if (active_bullet) begin
+            if (bullet_active) begin
                 if (bullet_y > BULLET_SPEED) begin
                     bullet_y <= bullet_y - BULLET_SPEED;
                 end else begin
-                    active_bullet <= 1'b0; // Off screen, deactivate
+                    bullet_active <= 1'b0; // Off screen
                 end
             end else if (fire_latched) begin
-                active_bullet <= 1'b1;
+                bullet_active <= 1'b1;
                 bullet_x <= player_x;
                 bullet_y <= VRES - PADDLE_H - BULLET_H;
             end
@@ -69,17 +73,21 @@ module bullet (
     end
 
     //-----------------------------------------------------------------------------
-    // Bullet Center and Top Position Outputs
+    // Bounding Box Output
     //-----------------------------------------------------------------------------
-    assign bullet_center_x = bullet_x;
-    assign bullet_top_y = bullet_y;
+    always_comb begin
+        bullet_left   = bullet_x - BULLET_W/2;
+        bullet_right  = bullet_x + BULLET_W/2;
+        bullet_top    = bullet_y;
+        bullet_bottom = bullet_y + BULLET_H;
+    end
 
     //-----------------------------------------------------------------------------
-    // Bullet Drawing
+    // Drawing Logic
     //-----------------------------------------------------------------------------
-    assign active = active_bullet &&
-                    (hpos >= bullet_x - (BULLET_W >> 1)) && (hpos <= bullet_x + (BULLET_W >> 1)) &&
-                    (vpos >= bullet_y) && (vpos <= bullet_y + BULLET_H);
+    //assign active = bullet_active && (hpos >= bullet_left) && (hpos <= bullet_right) && (vpos >= bullet_top)  && (vpos <= bullet_bottom);
+
+    assign active = (bullet_active && hpos >= bullet_left && hpos <= bullet_right && vpos >= bullet_top && vpos <= bullet_bottom) ? 1'b1 : 1'b0;
 
     assign pixel[2] = active ? BULLET_COLOR[23:16] : 8'h00;
     assign pixel[1] = active ? BULLET_COLOR[15:8]  : 8'h00;

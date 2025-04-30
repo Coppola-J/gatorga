@@ -26,13 +26,12 @@ set_property -dict {PACKAGE_PIN H18 IOSTANDARD TMDS_33} [get_ports {tmds_tx_data
 set_property -dict { PACKAGE_PIN D19 IOSTANDARD LVCMOS33 } [get_ports right]
 # Push button 1 -> Left
 set_property -dict { PACKAGE_PIN D20 IOSTANDARD LVCMOS33 } [get_ports left]
-
 # Push button 2 -> Fire
-set_property -dict { PACKAGE_PIN L19 IOSTANDARD LVCMOS33 } [get_ports fire]
+set_property -dict { PACKAGE_PIN L20 IOSTANDARD LVCMOS33 } [get_ports fire]
 
 
-## LEDs
-set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33} [get_ports {led_kawser}]
-#set_property -dict {PACKAGE_PIN P14 IOSTANDARD LVCMOS33} [get_ports {leds_4bits_tri_o[1]}]
-#set_property -dict {PACKAGE_PIN N16 IOSTANDARD LVCMOS33} [get_ports {leds_4bits_tri_o[2]}]
-#set_property -dict {PACKAGE_PIN M14 IOSTANDARD LVCMOS33} [get_ports {leds_4bits_tri_o[3]}]
+## Debug LEDs
+set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33} [get_ports {debug[0]}]
+set_property -dict {PACKAGE_PIN P14 IOSTANDARD LVCMOS33} [get_ports {debug[1]}]
+set_property -dict {PACKAGE_PIN N16 IOSTANDARD LVCMOS33} [get_ports {debug[2]}]
+set_property -dict {PACKAGE_PIN M14 IOSTANDARD LVCMOS33} [get_ports {debug[3]}]

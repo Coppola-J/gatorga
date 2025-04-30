@@ -5,8 +5,8 @@
 package params;
 
     // Screen resolution
-    parameter int HRES = 1280;
-    parameter int VRES = 720;
+    parameter HRES = 1280;
+    parameter VRES = 720;
 
     // Player paddle
     parameter PADDLE_VEL = 16;
@@ -34,16 +34,16 @@ package params;
 
 
     // Bullet
-    parameter int BULLET_W = 4;
-    parameter int BULLET_H = 16;
-    parameter int BULLET_SPEED = 16;
-    parameter logic [23:0] BULLET_COLOR = 24'hFFFFFF; // White
+    parameter BULLET_W = 4;
+    parameter BULLET_H = 16;
+    parameter BULLET_SPEED = 16;
+    parameter [23:0] BULLET_COLOR = 24'hFFFFFF; // White
 
     // Enemies
-    parameter int ENEMY_W = 32;
-    parameter int ENEMY_H = 28;
-    parameter int ENEMY_SPEED = 2;
-    parameter logic [23:0] ENEMY_COLOR = 24'h00AAFF; // Blueish
-    parameter int DROP = 32;
+    parameter ENEMY_W = 32;
+    parameter ENEMY_H = 28;
+    parameter ENEMY_SPEED = 2;
+    parameter [23:0] ENEMY_COLOR = 24'h00AAFF; // Blueish
+    parameter DROP = 32;
 
 endpackage
