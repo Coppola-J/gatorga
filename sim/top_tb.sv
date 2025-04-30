@@ -1,17 +1,22 @@
-`timescale 1ns/1ps
+`timescale 1ns / 1ps
+import params::*;
 
 module top_tb;
 
-    // Inputs to the top-level DUT
-    logic clk125;
-    logic right, left, fire;
+    // Inputs
+    logic clk125 = 0;
+    logic right = 0;
+    logic left = 0;
+    logic fire = 0;
 
-    // Outputs (HDMI signals are not used in sim, but must be wired)
-    logic tmds_tx_clk_p, tmds_tx_clk_n;
-    logic [2:0] tmds_tx_data_p, tmds_tx_data_n;
-    logic led_kawser;
+    // Outputs
+    logic tmds_tx_clk_p;
+    logic tmds_tx_clk_n;
+    logic [2:0] tmds_tx_data_p;
+    logic [2:0] tmds_tx_data_n;
+    wire [0:3] debug; // Debug signals
 
-    // Instantiate the DUT (top-level game module)
+    // Instantiate DUT
     top uut (
         .clk125(clk125),
         .right(right),
@@ -20,33 +25,55 @@ module top_tb;
         .tmds_tx_clk_p(tmds_tx_clk_p),
         .tmds_tx_clk_n(tmds_tx_clk_n),
         .tmds_tx_data_p(tmds_tx_data_p),
-        .tmds_tx_data_n(tmds_tx_data_n),
-        .led_kawser(led_kawser)
+        .tmds_tx_data_n(tmds_tx_data_n)
     );
 
-    // Clock Generation (125 MHz)
-    initial clk125 = 0;
-    always #4 clk125 = ~clk125;
+    // Clock generation
+    always #5 clk125 = ~clk125; // 100 MHz clock
 
-    // Stimulus
+    // Task to simulate holding left or right
+    task move(input string direction, input int cycles);
+        begin
+            if (direction == "left") left = 1;
+            else if (direction == "right") right = 1;
+            repeat (cycles) @(posedge clk125);
+            left = 0;
+            right = 0;
+        end
+    endtask
+
+    // Task to fire a bullet
+    task fire_bullet;
+        begin
+            fire = 1;
+            repeat (2) @(posedge clk125);
+            fire = 0;
+        end
+    endtask
+
+    // Sim procedure
     initial begin
-        // Initial values
-        right = 0;
-        left  = 0;
-        fire  = 0;
-        
-        // Wait some cycles for reset and paddle positioning
-        repeat (1000) @(posedge clk125);
+        $display("=== TOP TB START ===");
 
-        // Fire once — assumes paddle is already centered
-        fire = 1;
-        @(posedge clk125);
-        fire = 0;
+        // Reset happens internally
+        repeat (100) @(posedge clk125);
 
-        // Let bullet fly and simulate enough for possible alien hit
-        repeat (100_000) @(posedge clk125);
+        // Move paddle to right and fire
+        move("right", 80);
+        fire_bullet();
+        repeat (10000) @(posedge clk125);
 
-        $display("Simulation complete.");
+        // Move paddle to left and fire
+        move("left", 160);
+        fire_bullet();
+        repeat (10000) @(posedge clk125);
+
+        // Center paddle and fire
+        move("right", 40);
+        fire_bullet();
+        repeat (10000) @(posedge clk125);
+
+        $display("=== TOP TB COMPLETE ===");
         $finish;
     end
 

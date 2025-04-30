@@ -6,7 +6,7 @@ module bullet (
     input rst,
     input fsync,
     input fire,                                     // Fire button input
-    input signed [11:0] player_x,                   // Player ship X position (center)
+    input logic [11:0] player_x,                    // Player ship X position (center)
     input signed [11:0] hpos,                       // Current pixel horizontal position
     input signed [11:0] vpos,                       // Current pixel vertical position
 

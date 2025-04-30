@@ -17,7 +17,7 @@ module paddle (
     input left,
     output [7:0] pixel [0:2],
     output active,
-    output logic signed [11:0] paddle_center_x   // <-- NEW!
+    output logic [11:0] paddle_center_x   // <-- NEW!
 );
 
     //-----------------------------------------------------------------------------
@@ -100,9 +100,9 @@ module paddle (
     //-----------------------------------------------------------------------------
     always_ff @(posedge pixel_clk) begin
         if (rst) begin
-            paddle_center_x <= (HRES >> 1);  // Start centered
+            paddle_center_x <= (HRES/2);  // Start centered
         end else if (fsync) begin
-            paddle_center_x <= (lhpos + rhpos) >>> 1; // Center = (left + right) / 2
+            paddle_center_x <= (lhpos + rhpos) / 2; // Center = (left + right) / 2
         end
     end
 
