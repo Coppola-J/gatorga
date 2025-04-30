@@ -9,7 +9,7 @@ module alien (
     input signed [11:0] hpos,
     input signed [11:0] vpos,
 
-    input alien_hit_external,     // <-- NEW: Comes from external collision detector
+    input wire alien_hit,     // <-- NEW: Comes from external collision detector
 
     output [7:0] pixel [0:2],
     output active,
@@ -28,15 +28,15 @@ module alien (
     //-----------------------------------------------------------------------------
     always_ff @(posedge pixel_clk) begin
         if (rst) begin
-            lhpos <= 100;
-            rhpos <= 100 + ENEMY_W;
-            tvpos <= 100;
-            bvpos <= 100 + ENEMY_H;
+            lhpos <= ALIEN_START;
+            rhpos <= ALIEN_START + ENEMY_W;
+            tvpos <= ALIEN_START - ENEMY_H;
+            bvpos <= ALIEN_START;
             dir <= 0;
             alien_alive <= 1'b1;
         end else if (fsync) begin
             // Mark dead if hit this frame
-            if (alien_hit_external && alien_alive)
+            if (alien_hit && alien_alive)
                 alien_alive <= 1'b0;
 
             if (alien_alive) begin
@@ -67,7 +67,7 @@ module alien (
     //-----------------------------------------------------------------------------
     // Pixel Drawing
     //-----------------------------------------------------------------------------
-    assign active = (alien_alive && hpos >= lhpos && hpos <= rhpos && vpos >= tvpos && vpos <= bvpos) ? 1'b1 : 1'b0;
+    assign active = (!alien_hit && alien_alive && hpos >= lhpos && hpos <= rhpos && vpos >= tvpos && vpos <= bvpos) ? 1'b1 : 1'b0;
 
     assign pixel[2] = active ? ENEMY_COLOR[23:16] : 8'h00;
     assign pixel[1] = active ? ENEMY_COLOR[15:8]  : 8'h00;

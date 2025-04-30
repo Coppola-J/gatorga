@@ -16,23 +16,15 @@ module collision_controller (
     input signed [11:0] alien_tvpos,
     input signed [11:0] alien_bvpos,
 
-    output logic alien_hit
+    output wire alien_hit
 );
 
-    always_ff @(posedge pixel_clk) begin
-        if (rst) begin
-            alien_hit <= 1'b0;
-        end else if (fsync) begin
-            if (bullet_active && alien_alive &&
+
+
+assign alien_hit = (!rst && fsync && bullet_active && alien_alive &&
                 bullet_right >= alien_lhpos &&
                 bullet_left  <= alien_rhpos &&
                 bullet_bottom >= alien_tvpos &&
-                bullet_top    <= alien_bvpos) begin
-                alien_hit <= 1'b1;
-            end else begin
-                alien_hit <= 1'b0;
-            end
-        end
-    end
+                bullet_top    <= alien_bvpos);
 
 endmodule

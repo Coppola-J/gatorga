@@ -132,6 +132,7 @@ bullet bullet_inst (
 
     .pixel(pixel_bullet),
 
+    .alien_hit(alien_hit),
     // Collision box outputs
     .bullet_active(bullet_active),
     .bullet_left(bullet_left),
@@ -151,7 +152,7 @@ alien alien_inst (
     .fsync(fsync),
     .hpos(hpos),
     .vpos(vpos),
-    .alien_hit_external(alien_hit),         // << connect from detector
+    .alien_hit(alien_hit),         // << connect from detector
     .pixel(pixel_alien),
     .active(active_alien),
     .alien_alive(alien_alive),
@@ -228,29 +229,28 @@ assign debug[3] = (bullet_left < alien_rhpos);
 // Final Pixel Output
 //-----------------------------------------------------------------------------
 
-assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] : (pixel_obj[2] | pixel_paddle[2] | pixel_bullet[2] | pixel_alien[2]);
-assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] : (pixel_obj[1] | pixel_paddle[1] | pixel_bullet[1] | pixel_alien[1]);
-assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] : (pixel_obj[0] | pixel_paddle[0] | pixel_bullet[0] | pixel_alien[0]);
+//assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] : (pixel_obj[2] | pixel_paddle[2] | pixel_bullet[2] | pixel_alien[2]);
+//assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] : (pixel_obj[1] | pixel_paddle[1] | pixel_bullet[1] | pixel_alien[1]);
+//assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] : (pixel_obj[0] | pixel_paddle[0] | pixel_bullet[0] | pixel_alien[0]);
 
-/*
+
 assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] :
-                  (pixel_bullet[0] | pixel_bullet[1] | pixel_bullet[2]) ? pixel_bullet[2] :
-                  (pixel_alien[0] | pixel_alien[1] | pixel_alien[2]) ? pixel_alien[2] :
-                  (pixel_obj[0]   | pixel_obj[1]   | pixel_obj[2])   ? pixel_obj[2] :
-                                                                     pixel_paddle[2];
+                  pixel_alien[2]      ? pixel_alien[2]    :
+                  pixel_paddle[2]     ? pixel_paddle[2]   :
+                  pixel_bullet[2]     ? pixel_bullet[2]   :
+                                        1'b0;
 
 assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] :
-                  (pixel_bullet[0] | pixel_bullet[1] | pixel_bullet[2]) ? pixel_bullet[1] :
-                  (pixel_alien[0] | pixel_alien[1] | pixel_alien[2]) ? pixel_alien[1] :
-                  (pixel_obj[0]   | pixel_obj[1]   | pixel_obj[2])   ? pixel_obj[1] :
-                                                                     pixel_paddle[1];
+                  pixel_alien[1]      ? pixel_alien[1]    :
+                  pixel_paddle[1]     ? pixel_paddle[1]   :
+                  pixel_bullet[1]     ? pixel_bullet[1]   :
+                                        1'b0;
 
 assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] :
-                  (pixel_bullet[0] | pixel_bullet[1] | pixel_bullet[2]) ? pixel_bullet[0] :
-                  (pixel_alien[0] | pixel_alien[1] | pixel_alien[2]) ? pixel_alien[0] :
-                  (pixel_obj[0]   | pixel_obj[1]   | pixel_obj[2])   ? pixel_obj[0] :
-                                                                     pixel_paddle[0];
-*/
+                  pixel_alien[0]      ? pixel_alien[0]    :
+                  pixel_paddle[0]     ? pixel_paddle[0]   :
+                  pixel_bullet[0]     ? pixel_bullet[0]   :
+                                        1'b0;
 
 
 

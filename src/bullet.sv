@@ -12,6 +12,7 @@ module bullet (
 
     output [7:0] pixel [0:2],                       // RGB pixel output                         // Bullet is currently being drawn
 
+    input wire alien_hit,                               // Alien hit signal (for collision detection)
     // Collision detection outputs
     output logic bullet_active,                     // Whether bullet is flying
     output logic signed [11:0] bullet_left,
@@ -58,16 +59,20 @@ module bullet (
             bullet_x <= 0;
             bullet_y <= 0;
         end else if (fsync) begin
-            if (bullet_active) begin
-                if (bullet_y > BULLET_SPEED) begin
-                    bullet_y <= bullet_y - BULLET_SPEED;
-                end else begin
-                    bullet_active <= 1'b0; // Off screen
+            if (alien_hit) begin
+                bullet_active <= 1'b0; // Reset bullet on alien hit
+            end else begin
+                if (bullet_active) begin                            // If bullet is active - shoot up until off screen
+                    if (bullet_y > BULLET_SPEED) begin
+                        bullet_y <= bullet_y - BULLET_SPEED;
+                    end else begin
+                        bullet_active <= 1'b0; // Off screen
+                    end
+                end else if (fire_latched) begin                    // if bullet is not active- place in correct spot and poll fire button to see if it should be
+                    bullet_active <= 1'b1;
+                    bullet_x <= player_x;
+                    bullet_y <= VRES - PADDLE_H - BULLET_H;
                 end
-            end else if (fire_latched) begin
-                bullet_active <= 1'b1;
-                bullet_x <= player_x;
-                bullet_y <= VRES - PADDLE_H - BULLET_H;
             end
         end
     end
@@ -87,7 +92,7 @@ module bullet (
     //-----------------------------------------------------------------------------
     //assign active = bullet_active && (hpos >= bullet_left) && (hpos <= bullet_right) && (vpos >= bullet_top)  && (vpos <= bullet_bottom);
 
-    assign active = (bullet_active && hpos >= bullet_left && hpos <= bullet_right && vpos >= bullet_top && vpos <= bullet_bottom) ? 1'b1 : 1'b0;
+    assign active = (!alien_hit && bullet_active && hpos >= bullet_left && hpos <= bullet_right && vpos >= bullet_top && vpos <= bullet_bottom) ? 1'b1 : 1'b0;
 
     assign pixel[2] = active ? BULLET_COLOR[23:16] : 8'h00;
     assign pixel[1] = active ? BULLET_COLOR[15:8]  : 8'h00;
