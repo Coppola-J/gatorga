@@ -77,7 +77,7 @@ hdmi_transmit hdmi_transmit_inst(
     .clk125(clk125),
     .pixel(pixel),
     .pixel_clk(pixel_clk),
-    .rst(rst),
+    .rst(rst),                  // Outputting Reset signal
     .active(active),
     .fsync(fsync),
     .hpos(hpos),
@@ -228,6 +228,8 @@ assign debug[3] = (bullet_left < alien_rhpos);
 //-----------------------------------------------------------------------------
 // Final Pixel Output
 //-----------------------------------------------------------------------------
+
+// (EXAMPLE) condition ? if true : if false
 
 //assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] : (pixel_obj[2] | pixel_paddle[2] | pixel_bullet[2] | pixel_alien[2]);
 //assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] : (pixel_obj[1] | pixel_paddle[1] | pixel_bullet[1] | pixel_alien[1]);
