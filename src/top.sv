@@ -54,16 +54,6 @@ wire signed [11:0] bullet_center_x;
 wire signed [11:0] bullet_top_y;
 wire signed [11:0] bullet_left, bullet_right, bullet_top, bullet_bottom;
 
-// Alien signals
-wire alien_hit;
-wire [7:0] pixel_alien [0:2];
-wire active_alien;
-wire alien_alive;                  // Indicates if the alien is alive
-wire signed [11:0] alien_lhpos;   // Left x-boundary of alien
-wire signed [11:0] alien_rhpos;   // Right x-boundary of alien
-wire signed [11:0] alien_tvpos;   // Top y-boundary of alien
-wire signed [11:0] alien_bvpos;   // Bottom y-boundary of alien
-
 
 // Game over control
 wire game_over;                       // Game over active signal
@@ -142,7 +132,7 @@ bullet bullet_inst (
 );
 
 
-
+/*
 //-----------------------------------------------------------------------------
 // Alien Instantiation
 //-----------------------------------------------------------------------------
@@ -166,18 +156,6 @@ alien alien_inst (
 // Alien Instantiation
 //-----------------------------------------------------------------------------
 
-/*
-wire bullet_left;
-wire bullet_right;
-wire bullet_top;
-wire bullet_bottom;
-
-assign bullet_left   = bullet_center_x - (BULLET_W >> 1);
-assign bullet_right  = bullet_center_x + (BULLET_W >> 1);
-assign bullet_top    = bullet_top_y;
-assign bullet_bottom = bullet_top_y + BULLET_H;
-*/
-
 collision_controller collision_inst (
     .pixel_clk(pixel_clk),
     .rst(rst),
@@ -197,6 +175,46 @@ collision_controller collision_inst (
 
     .alien_hit(alien_hit)
 );
+*/
+
+// New Alien group signals
+wire [$clog2(4*5+1)-1:0] aliens_remaining;  // adjust 4x5 if needed
+
+// Alien signals
+wire alien_hit;
+wire [7:0] pixel_alien [0:2];
+wire active_alien;
+wire alien_alive;                  // Indicates if the alien is alive
+wire signed [11:0] alien_lhpos;   // Left x-boundary of alien
+wire signed [11:0] alien_rhpos;   // Right x-boundary of alien
+wire signed [11:0] alien_tvpos;   // Top y-boundary of alien
+wire signed [11:0] alien_bvpos;   // Bottom y-boundary of alien
+
+alien_group #(
+    .NUM_ROWS(4),
+    .NUM_COLS(5)
+) alien_group_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst || game_over),
+    .fsync(fsync),
+
+    .hpos(hpos),
+    .vpos(vpos),
+
+    .speed(ENEMY_SPEED),                    // or a dynamic speed input later
+    .bullet_active(bullet_active),
+    .bullet_left(bullet_left),
+    .bullet_right(bullet_right),
+    .bullet_top(bullet_top),
+    .bullet_bottom(bullet_bottom),
+
+    .alien_hit_out(alien_hit),
+    .pixel(pixel_alien),
+    .active(active_alien),
+    .aliens_remaining(aliens_remaining)
+);
+
+
 
 //-----------------------------------------------------------------------------
 // Game Over Controller Instantiation
