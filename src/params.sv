@@ -42,14 +42,18 @@ package params;
     // Enemies
     parameter ENEMY_W = 32;
     parameter ENEMY_H = 28;
-    parameter ENEMY_SPEED = 2;           // Might need to be adjusted to account for different speeds at higher levels
+    parameter ENEMY_SPEED = 1;           // Might need to be adjusted to account for different speeds at higher levels
     parameter [23:0] ENEMY_COLOR = 24'h00AAFF; // Blueish
     parameter DROP = 32;
     parameter ALIEN_START = (VRES - PADDLE_H - BULLET_H) - (DROP * 17); // Used for clean collision detection (alien & bullet will occur on the same pixels)
     parameter SPACING_X = 50;
     parameter SPACING_Y = 16;
     parameter ENEMY_BULLET_COLOR = 24'hFF0000; // Red
-    parameter NUM_COLS = 10;
+    parameter NUM_COLS = 6;
     parameter NUM_ROWS = 10;
+    parameter ALIEN_HSTART = (HRES - ((NUM_COLS * ENEMY_W) + ((NUM_COLS - 1) * SPACING_X))) / 2;
+    parameter ALIEN_VSTART = (VRES - PADDLE_H - BULLET_H) - (DROP * 18);
+    parameter ENEMY_BULLET_SPEED = 1;
+
 
 endpackage

@@ -33,30 +33,49 @@ module alien_group (
     // Width of full alien group
     localparam TOTAL_W = NUM_COLS * ENEMY_W + (NUM_COLS - 1) * SPACING_X;
 
+
+    logic signed [11:0] row_lhpos [NUM_ROWS-1:0];  // Per-row left pos
+    logic row_dir [NUM_ROWS-1:0];                  // 0 = right, 1 = left
+    logic signed [11:0] group_tvpos;               // Shared vertical top position
+    logic drop_flag;                               // Flag to indicate group drop
+
     // Group movement
     always_ff @(posedge pixel_clk) begin
         if (rst) begin
-            group_lhpos <= ALIEN_START;
-            group_tvpos <= ALIEN_START;
-            dir <= 0;
-        end else if (fsync) begin
-            if (dir == 0) begin
-                if (group_lhpos + TOTAL_W + speed < HRES)
-                    group_lhpos <= group_lhpos + speed;
-                else begin
-                    dir <= 1;
-                    group_tvpos <= group_tvpos + DROP;
-                end
-            end else begin
-                if (group_lhpos > speed)
-                    group_lhpos <= group_lhpos - speed;
-                else begin
-                    dir <= 0;
-                    group_tvpos <= group_tvpos + DROP;
-                end
+            for (int r = 0; r < NUM_ROWS; r++) begin
+                row_lhpos[r] <= ALIEN_HSTART;
+                row_dir[r] <= (r % 2);  // Alternate direction
             end
+            group_tvpos <= ALIEN_VSTART;
+        end else if (fsync) begin
+            drop_flag <= 0;
+                for (int r = 0; r < NUM_ROWS; r++) begin
+                    // Predict next position
+                    logic signed [11:0] next_lhpos = row_lhpos[r] + (row_dir[r] ? -speed : speed);
+
+                    // Compute left/right edges at next position
+                    logic signed [11:0] next_left_edge  = next_lhpos + leftmost_col[r]  * (ENEMY_W + SPACING_X);
+                    logic signed [11:0] next_right_edge = next_lhpos + rightmost_col[r] * (ENEMY_W + SPACING_X) + ENEMY_W;
+
+                    // Check bounds
+                    logic will_hit_left  = (next_left_edge <= speed);
+                    logic will_hit_right = (next_right_edge >= HRES);
+
+                    if ((row_dir[r] && will_hit_left) || (!row_dir[r] && will_hit_right)) begin
+                        // Change direction and mark drop
+                        row_dir[r] <= ~row_dir[r];
+                        drop_flag <= 1;
+                    end else begin
+                        // Safe to move, update position
+                        row_lhpos[r] <= next_lhpos;
+                    end
+                end
+            if (drop_flag)
+                group_tvpos <= group_tvpos + DROP;
         end
     end
+
+
 
     // Alien wires
     logic [NUM_ROWS-1:0][NUM_COLS-1:0] alien_hit_array;
@@ -160,6 +179,35 @@ end
         end
     end
 
+//
+    logic [$clog2(NUM_COLS)-1:0] leftmost_col [NUM_ROWS-1:0];
+    logic [$clog2(NUM_COLS)-1:0] rightmost_col [NUM_ROWS-1:0];
+
+    always_comb begin
+        for (int r = 0; r < NUM_ROWS; r++) begin
+            leftmost_col[r] = 0;
+            rightmost_col[r] = NUM_COLS - 1;
+
+            // Find leftmost alive
+            for (int c = 0; c < NUM_COLS; c++) begin
+                if (alien_alive[r][c]) begin
+                    leftmost_col[r] = c;
+                    break;
+                end
+            end
+
+            // Find rightmost alive
+            for (int c = NUM_COLS - 1; c >= 0; c--) begin
+                if (alien_alive[r][c]) begin
+                    rightmost_col[r] = c;
+                    break;
+                end
+            end
+        end
+    end
+//
+
+
     assign alien_hit_out = |alien_hit_array;
 
     generate
@@ -172,7 +220,7 @@ end
                     .fsync(fsync),
                     .hpos(hpos),
                     .vpos(vpos),
-                    .group_lhpos(group_lhpos),
+                    .group_lhpos(row_lhpos[r]),
                     .group_tvpos(group_tvpos),
                     .row(r),
                     .col(c),

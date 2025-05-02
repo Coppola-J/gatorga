@@ -28,8 +28,8 @@ module alien_bullet (
             bullet_y <= '0;
         end else if (fsync) begin
             if (bullet_active) begin
-                if (bullet_y < VRES - BULLET_SPEED)
-                    bullet_y <= bullet_y + BULLET_SPEED; // move down
+                if (bullet_y < VRES - ENEMY_BULLET_SPEED)
+                    bullet_y <= bullet_y + ENEMY_BULLET_SPEED; // move down
                 else
                     bullet_active <= 0;
             end else if (fire) begin
