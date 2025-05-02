@@ -79,19 +79,6 @@ hdmi_transmit hdmi_transmit_inst(
 );
 
 //-----------------------------------------------------------------------------
-// Moving Object (Ball) Instantiation
-//-----------------------------------------------------------------------------
-object object_inst (
-    .pixel_clk(pixel_clk),
-    .rst(rst || game_over),
-    .fsync(fsync),
-    .hpos(hpos),
-    .vpos(vpos),
-    .pixel(pixel_obj),
-    .active(active_obj)
-);
-
-//-----------------------------------------------------------------------------
 // Paddle Instantiation
 //-----------------------------------------------------------------------------
 paddle paddle_inst (
@@ -132,53 +119,8 @@ bullet bullet_inst (
 );
 
 
-/*
-//-----------------------------------------------------------------------------
-// Alien Instantiation
-//-----------------------------------------------------------------------------
-alien alien_inst (
-    .pixel_clk(pixel_clk),
-    .rst(rst || game_over),
-    .fsync(fsync),
-    .hpos(hpos),
-    .vpos(vpos),
-    .alien_hit(alien_hit),         // << connect from detector
-    .pixel(pixel_alien),
-    .active(active_alien),
-    .alien_alive(alien_alive),
-    .lhpos(alien_lhpos),
-    .rhpos(alien_rhpos),
-    .tvpos(alien_tvpos),
-    .bvpos(alien_bvpos)
-);
-
-//-----------------------------------------------------------------------------
-// Alien Instantiation
-//-----------------------------------------------------------------------------
-
-collision_controller collision_inst (
-    .pixel_clk(pixel_clk),
-    .rst(rst),
-    .fsync(fsync),
-    .bullet_active(bullet_active),
-    .alien_alive(alien_alive),
-
-    .bullet_left(bullet_left),
-    .bullet_right(bullet_right),
-    .bullet_top(bullet_top),
-    .bullet_bottom(bullet_bottom),
-
-    .alien_lhpos(alien_lhpos),
-    .alien_rhpos(alien_rhpos),
-    .alien_tvpos(alien_tvpos),
-    .alien_bvpos(alien_bvpos),
-
-    .alien_hit(alien_hit)
-);
-*/
-
 // New Alien group signals
-wire [$clog2(4*5+1)-1:0] aliens_remaining;  // adjust 4x5 if needed
+wire [$clog2(NUM_ROWS*NUM_COLS+1)-1:0] aliens_remaining;  // adjust 4x5 if needed
 
 // Alien signals
 wire alien_hit;
@@ -190,10 +132,7 @@ wire signed [11:0] alien_rhpos;   // Right x-boundary of alien
 wire signed [11:0] alien_tvpos;   // Top y-boundary of alien
 wire signed [11:0] alien_bvpos;   // Bottom y-boundary of alien
 
-alien_group #(
-    .NUM_ROWS(4),
-    .NUM_COLS(5)
-) alien_group_inst (
+alien_group alien_group_inst (
     .pixel_clk(pixel_clk),
     .rst(rst || game_over),
     .fsync(fsync),

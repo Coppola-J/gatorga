@@ -46,7 +46,10 @@ package params;
     parameter [23:0] ENEMY_COLOR = 24'h00AAFF; // Blueish
     parameter DROP = 32;
     parameter ALIEN_START = (VRES - PADDLE_H - BULLET_H) - (DROP * 17); // Used for clean collision detection (alien & bullet will occur on the same pixels)
-    parameter SPACING_X = 10;
+    parameter SPACING_X = 50;
     parameter SPACING_Y = 16;
+    parameter ENEMY_BULLET_COLOR = 24'hFF0000; // Red
+    parameter NUM_COLS = 10;
+    parameter NUM_ROWS = 10;
 
 endpackage
