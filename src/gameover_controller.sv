@@ -14,6 +14,7 @@ module gameover_controller (
     input active_paddle,
     input signed [11:0] hpos,
     input signed [11:0] vpos,
+    input logic alien_reached_paddle, // Signal to indicate if an alien has reached the paddle
 
     output logic game_over,                 // Game over active
     output logic use_gameover_pixels,       // Should top use gameover pixels?
@@ -69,6 +70,8 @@ always_ff @(posedge pixel_clk) begin
                     if (~active_obj) begin
                         game_over_eval <= 1'b1;
                     end
+                end else if (alien_reached_paddle) begin    // if alien touches paddle, game over
+                    game_over_eval <= 1'b1;
                 end
             end else if (fsync) begin
                 if (pause == RESTART_PAUSE) begin

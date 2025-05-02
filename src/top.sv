@@ -46,6 +46,7 @@ wire [7:0] pixel_obj [0:2];
 wire active_paddle;
 wire [7:0] pixel_paddle [0:2];
 wire signed [11:0] paddle_center_x;
+logic signed [11:0] paddle_left, paddle_right, paddle_top, paddle_bottom; // Paddle bounding box coordinates
 
 //Bullet signals
 wire [7:0] pixel_bullet [0:2];      // RGB pixel values from gameover controller
@@ -91,7 +92,11 @@ paddle paddle_inst (
     .left(left),
     .pixel(pixel_paddle),
     .active(active_paddle),
-    .paddle_center_x(paddle_center_x)    // <-- NEW
+    .paddle_center_x(paddle_center_x),    // <-- NEW
+    .paddle_left(paddle_left),
+    .paddle_right(paddle_right),
+    .paddle_top(paddle_top),
+    .paddle_bottom(paddle_bottom)
 );
 
 
@@ -147,6 +152,13 @@ alien_group alien_group_inst (
     .bullet_top(bullet_top),
     .bullet_bottom(bullet_bottom),
 
+    .paddle_left(paddle_left),
+    .paddle_right(paddle_right),
+    .paddle_top(paddle_top),
+    .paddle_bottom(paddle_bottom),
+    .alien_reached_paddle(alien_reached_paddle),  // NEW OUTPUT
+
+
     .alien_hit_out(alien_hit),
     .pixel(pixel_alien),
     .active(active_alien),
@@ -158,11 +170,14 @@ alien_group alien_group_inst (
 //-----------------------------------------------------------------------------
 // Game Over Controller Instantiation
 //-----------------------------------------------------------------------------
+logic alien_reached_paddle; // Signal to indicate if an alien has reached the paddle
+
 gameover_controller gameover_controller_inst (
     .pixel_clk(pixel_clk),
     .rst(rst),
     .fsync(fsync),
     .active_obj(active_obj),
+    .alien_reached_paddle(alien_reached_paddle),
     .active_paddle(active_paddle),
     .hpos(hpos),
     .vpos(vpos),

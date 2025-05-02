@@ -10,16 +10,25 @@ module alien_group (
     input  signed [11:0] vpos,
 
     input  logic [7:0]         speed,
-    input  logic               bullet_active,
+
+    input  logic       bullet_active,
     input  signed [11:0] bullet_left,
     input  signed [11:0] bullet_right,
     input  signed [11:0] bullet_top,
     input  signed [11:0] bullet_bottom,
 
-    output wire               alien_hit_out,
+    input signed [11:0] paddle_left,
+    input signed [11:0] paddle_right,
+    input signed [11:0] paddle_top,
+    input signed [11:0] paddle_bottom,
+    output logic alien_reached_paddle,  // NEW OUTPUT
+
+    output wire         alien_hit_out,
     output logic [$clog2(NUM_ROWS * NUM_COLS + 1)-1:0] aliens_remaining,
     output logic [7:0] pixel [0:2],
     output                active,
+
+
     // Debug
     output logic signed [11:0] alien_bullet_x,
     output logic signed [11:0] alien_bullet_y
@@ -207,8 +216,25 @@ end
     end
 //
 
-
     assign alien_hit_out = |alien_hit_array;
+
+    always_comb begin
+        alien_reached_paddle = 0;
+        for (int r = 0; r < NUM_ROWS; r++) begin
+            for (int c = 0; c < NUM_COLS; c++) begin
+                if (alien_alive[r][c]) begin
+                    if (
+                        rhpos[r][c] >= paddle_left &&
+                        lhpos[r][c] <= paddle_right &&
+                        bvpos[r][c] >= paddle_top &&
+                        tvpos[r][c] <= paddle_bottom
+                    ) begin
+                        alien_reached_paddle = 1;
+                    end
+                end
+            end
+        end
+    end
 
     generate
         genvar r, c;

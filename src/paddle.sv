@@ -17,7 +17,13 @@ module paddle (
     input left,
     output [7:0] pixel [0:2],
     output active,
-    output logic [11:0] paddle_center_x   // <-- NEW!
+    output logic [11:0] paddle_center_x,   // <-- NEW!
+
+    output logic signed [11:0] paddle_left,
+    output logic signed [11:0] paddle_right,
+    output logic signed [11:0] paddle_top,
+    output logic signed [11:0] paddle_bottom
+
 );
 
     //-----------------------------------------------------------------------------
@@ -109,6 +115,14 @@ module paddle (
     //-----------------------------------------------------------------------------
     // Video Output (Active Pixel Detection + Coloring)
     //-----------------------------------------------------------------------------
+
+    always_comb begin
+        paddle_left   = lhpos;
+        paddle_right  = rhpos;
+        paddle_top    = tvpos;
+        paddle_bottom = bvpos;
+    end
+
 
     // Active if current pixel is inside paddle bounds
     assign active = (hpos >= lhpos && hpos <= rhpos && vpos >= tvpos && vpos <= bvpos) ? 1'b1 : 1'b0;
