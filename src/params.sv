@@ -1,14 +1,21 @@
 //-----------------------------------------------------------------------------
-// Global Parameters File for Space Invaders
+// Module: params
+// Description: 
+//  Parameter definitions for all entitiies within the game. 
 //-----------------------------------------------------------------------------
 
 package params;
 
-    // Screen resolution
+//-----------------------------------------------------------------------------
+// Screen bounds and resolution
+//-----------------------------------------------------------------------------
     parameter HRES = 1280;
     parameter VRES = 720;
 
-    // Player paddle
+
+//-----------------------------------------------------------------------------
+//  Player paddle
+//-----------------------------------------------------------------------------
     parameter PADDLE_VEL = 16;
     parameter PADDLE_W = 50;                // Paddle width in pixels
     parameter PADDLE_H = 20;                // Paddle height in pixels
@@ -17,7 +24,9 @@ package params;
     parameter LEFT = 2'h1;                  // Move left
     parameter RIGHT = 2'h2;                 // Move right
 
-    // Ball (object)
+//-----------------------------------------------------------------------------
+// Ball object from original pong game
+//-----------------------------------------------------------------------------
     parameter OBJECT_VEL = 0;    
     parameter OBJECT_COLOR = 24'h00FF90;         // Object color (neon green)
     parameter OBJ_SIZE = 50;              // Ball size
@@ -26,20 +35,26 @@ package params;
     parameter [1:0] UP_RIGHT   = 2'b10;   // Moving up and right
     parameter [1:0] UP_LEFT    = 2'b11;   // Moving up and left
 
-    // Game Over Text
+//-----------------------------------------------------------------------------
+// Game over screen
+//-----------------------------------------------------------------------------
     parameter GAMEOVER_H = 200;
     parameter GAMEOVER_VSTART = (VRES - GAMEOVER_H) >> 1;
     parameter RESTART_PAUSE = 128;
     parameter COLOR_GMO = 24'hDD4F83;
 
 
-    // Bullet
+//-----------------------------------------------------------------------------
+// Player bullet
+//-----------------------------------------------------------------------------
     parameter BULLET_W = 4;
     parameter BULLET_H = 16;
     parameter BULLET_SPEED = 16;
     parameter [23:0] BULLET_COLOR = 24'hFFFFFF; // White
 
-    // Enemies
+//-----------------------------------------------------------------------------
+// Enemies
+//-----------------------------------------------------------------------------
     parameter ENEMY_W = 32;
     parameter ENEMY_H = 28;
     parameter ENEMY_SPEED = 1;           // Might need to be adjusted to account for different speeds at higher levels

@@ -1,4 +1,8 @@
-// random number generator using LFSR (Linear Feedback Shift Register)
+//-----------------------------------------------------------------------------
+// Module: lfsr
+// Description: 
+//  Random number generator using a Linear Feedback Shift Register (LFSR).
+//-----------------------------------------------------------------------------
 
 module lfsr (
     input  logic clk,

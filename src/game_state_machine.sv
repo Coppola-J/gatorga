@@ -1,3 +1,9 @@
+//-----------------------------------------------------------------------------
+// Module: game_state_machine
+// Description: 
+//  Used to control the game state logic. Outputs control signals to advance levels, start and stop game. 
+//-----------------------------------------------------------------------------
+
 `timescale 1ns/1ps
 import params::*;
 
@@ -16,22 +22,29 @@ module game_state_machine (
     output logic [7:0] pixel_gameover [0:2] // Game over RGB pixels
 );
 
-reg [4:0] level_counter; // Counter for levels
 
-typedef enum logic [1:0] {
-    START_SCREEN,
-    NEXT_LEVEL,
-    PLAY_GAME,
-    GAMEOVER_SCREEN
-} state_t;
+//-----------------------------------------------------------------------------
+// Internal Registers
+//-----------------------------------------------------------------------------
+    reg [4:0] level_counter; // Counter for levels
 
-state_t state_r, next_state;
+    typedef enum logic [1:0] {
+        START_SCREEN,
+        NEXT_LEVEL,
+        PLAY_GAME,
+        GAMEOVER_SCREEN
+    } state_t;
 
-always_ff @(posedge pixel_clk, posedge rst) begin
-    if (rst) state_r <= START_SCREEN;
-    else state_r <= next_state;
-end
+    state_t state_r, next_state;
 
+    always_ff @(posedge pixel_clk, posedge rst) begin
+        if (rst) state_r <= START_SCREEN;
+        else state_r <= next_state;
+    end
+
+//-----------------------------------------------------------------------------
+// State machine logic
+//-----------------------------------------------------------------------------
 
 always_comb begin
     next_state = state_r;           // Next state will always be currwent state unless changed

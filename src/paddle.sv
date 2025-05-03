@@ -17,7 +17,7 @@ module paddle (
     input left,
     output [7:0] pixel [0:2],
     output active,
-    output logic [11:0] paddle_center_x,   // <-- NEW!
+    output logic [11:0] paddle_center_x,
 
     output logic signed [11:0] paddle_left,
     output logic signed [11:0] paddle_right,
@@ -26,9 +26,9 @@ module paddle (
 
 );
 
-    //-----------------------------------------------------------------------------
-    // Internal Signals
-    //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Internal Signals
+//-----------------------------------------------------------------------------
     reg [0:2] right_ff, left_ff;         // Button debounce shift registers
 
     reg signed [11:0] lhpos;             // Left x-boundary of paddle
@@ -39,9 +39,9 @@ module paddle (
     reg [1:0] dir;                       // Current paddle movement direction
     reg register_right, register_left;   // Latches for right/left button events
 
-    //-----------------------------------------------------------------------------
-    // Paddle Movement Direction Control
-    //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Paddle Movement Direction Control
+//-----------------------------------------------------------------------------
     always @(posedge pixel_clk) begin
         if (rst) begin
             dir <= PUT;
@@ -77,9 +77,9 @@ module paddle (
         left_ff <= {left, left_ff[0:1]};
     end
 
-    //-----------------------------------------------------------------------------
-    // Paddle Position Update
-    //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Paddle Position Update
+//-----------------------------------------------------------------------------
     always @(posedge pixel_clk) begin
         if (rst) begin
             // Center paddle at start
@@ -101,9 +101,9 @@ module paddle (
         end
     end
 
-    //-----------------------------------------------------------------------------
-    // Paddle Center Calculation
-    //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Paddle Center Calculation and posotion update
+//-----------------------------------------------------------------------------
     always_ff @(posedge pixel_clk) begin
         if (rst) begin
             paddle_center_x <= (HRES/2);  // Start centered
@@ -112,10 +112,6 @@ module paddle (
         end
     end
 
-    //-----------------------------------------------------------------------------
-    // Video Output (Active Pixel Detection + Coloring)
-    //-----------------------------------------------------------------------------
-
     always_comb begin
         paddle_left   = lhpos;
         paddle_right  = rhpos;
@@ -123,7 +119,9 @@ module paddle (
         paddle_bottom = bvpos;
     end
 
-
+//-----------------------------------------------------------------------------
+// Video Output (Active Pixel Detection + Coloring)
+//-----------------------------------------------------------------------------
     // Active if current pixel is inside paddle bounds
     assign active = (hpos >= lhpos && hpos <= rhpos && vpos >= tvpos && vpos <= bvpos) ? 1'b1 : 1'b0;
 

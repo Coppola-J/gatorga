@@ -1,3 +1,10 @@
+//-----------------------------------------------------------------------------
+// Module: alien_single
+// Description: 
+//  This module is used for the single alien generation inside of the 
+//  alien_group module. It handles the pixel generation and bounding box, and alive logic. 
+//-----------------------------------------------------------------------------
+
 `timescale 1ns/1ps
 import params::*;
 
@@ -27,7 +34,10 @@ module alien_single (
     output logic signed [11:0] bvpos
 );
 
-    // Alive logic
+
+//-----------------------------------------------------------------------------
+// Alive logic
+//-----------------------------------------------------------------------------
     always_ff @(posedge pixel_clk) begin
         if (rst)
             alien_alive <= 1'b1;
@@ -35,7 +45,9 @@ module alien_single (
             alien_alive <= 1'b0;
     end
 
-    // Bounding box based on group offset and grid index
+//-----------------------------------------------------------------------------
+// Bounding box logic
+//-----------------------------------------------------------------------------
     always_comb begin
         lhpos = group_lhpos + col * (ENEMY_W + SPACING_X);
         rhpos = lhpos + ENEMY_W - 1; // Ensure correct width
@@ -43,9 +55,10 @@ module alien_single (
         bvpos = tvpos + ENEMY_H - 1; // Ensure correct height
     end
 
-    // Pixel logic
+//-----------------------------------------------------------------------------
+// Pixel generation logic and assignments
+//-----------------------------------------------------------------------------
     assign active = (!alien_hit && alien_alive && hpos >= lhpos && hpos <= rhpos && vpos >= tvpos && vpos <= bvpos) ? 1'b1 : 1'b0;
-
-assign pixel = active ? ENEMY_COLOR : 24'h000000;
+    assign pixel = active ? ENEMY_COLOR : 24'h000000;
 
 endmodule

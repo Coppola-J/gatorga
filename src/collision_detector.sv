@@ -1,3 +1,9 @@
+//-----------------------------------------------------------------------------
+// Module: collision_controller
+// Description: 
+//  Used to detect collisions between the bullet and the alien. It checks if the bullet is within the bounding box of the alien.
+//-----------------------------------------------------------------------------
+
 module collision_controller (
     input pixel_clk,
     input rst,
@@ -19,8 +25,9 @@ module collision_controller (
     output wire alien_hit
 );
 
-
-
+//-----------------------------------------------------------------------------
+// Collision Detection Logic
+//-----------------------------------------------------------------------------
 assign alien_hit = (!rst && fsync && bullet_active && alien_alive &&
                 bullet_right >= alien_lhpos &&
                 bullet_left  <= alien_rhpos &&
