@@ -1,3 +1,11 @@
+//-----------------------------------------------------------------------------
+// Module: alien_group
+// Description: 
+//  This module represents a group of aliens in the game. It handles their
+//  movement, collision detection, and firing bullets. The aliens are arranged in a
+//  grid and can move left or right, dropping down when they reach the screen edges.
+//-----------------------------------------------------------------------------
+
 `timescale 1ns/1ps
 import params::*;
 
@@ -34,21 +42,46 @@ module alien_group (
     output logic signed [11:0] alien_bullet_y
 );
 
+
+//-----------------------------------------------------------------------------
+// Internal Registers
+//-----------------------------------------------------------------------------
+
     // Group position
     logic signed [11:0] group_lhpos, group_tvpos;
     logic               dir;
     logic [7:0] alien_pixel [0:2];
+    logic [$clog2(NUM_COLS)-1:0] leftmost_col [NUM_ROWS-1:0];
+    logic [$clog2(NUM_COLS)-1:0] rightmost_col [NUM_ROWS-1:0];
 
     // Width of full alien group
     localparam TOTAL_W = NUM_COLS * ENEMY_W + (NUM_COLS - 1) * SPACING_X;
-
 
     logic signed [11:0] row_lhpos [NUM_ROWS-1:0];  // Per-row left pos
     logic row_dir [NUM_ROWS-1:0];                  // 0 = right, 1 = left
     logic signed [11:0] group_tvpos;               // Shared vertical top position
     logic drop_flag;                               // Flag to indicate group drop
 
-    // Group movement
+    // Alien wires
+    logic [NUM_ROWS-1:0][NUM_COLS-1:0] alien_hit_array;
+    logic [NUM_ROWS-1:0][NUM_COLS-1:0] alien_alive;
+    logic [NUM_ROWS-1:0][NUM_COLS-1:0] actives;
+    logic [7:0] blue_pixels [NUM_ROWS-1:0][NUM_COLS-1:0];
+    logic [7:0] green_pixels [NUM_ROWS-1:0][NUM_COLS-1:0];
+    logic [7:0] red_pixels [NUM_ROWS-1:0][NUM_COLS-1:0];
+    logic signed [NUM_ROWS-1:0][NUM_COLS-1:0][11:0] lhpos, rhpos, tvpos, bvpos;
+
+    // Alien bullet wires
+    logic [7:0] alien_bullet_pixel [0:2];
+    logic alien_bullet_active;
+    logic fire_alien_bullet;
+    logic [3:0] fire_row, fire_col;
+    logic signed [11:0] fire_x, fire_y;
+
+//-----------------------------------------------------------------------------
+// Group Movement Logic
+//-----------------------------------------------------------------------------
+
     always_ff @(posedge pixel_clk) begin
         if (rst) begin
             for (int r = 0; r < NUM_ROWS; r++) begin
@@ -84,28 +117,31 @@ module alien_group (
         end
     end
 
+    always_comb begin
+        for (int r = 0; r < NUM_ROWS; r++) begin
+            leftmost_col[r] = 0;
+            rightmost_col[r] = NUM_COLS - 1;
 
+            // Find leftmost alive
+            for (int c = 0; c < NUM_COLS; c++) begin
+                if (alien_alive[r][c]) begin
+                    leftmost_col[r] = c;
+                    break;
+                end
+            end
 
-    // Alien wires
-    logic [NUM_ROWS-1:0][NUM_COLS-1:0] alien_hit_array;
-    logic [NUM_ROWS-1:0][NUM_COLS-1:0] alien_alive;
-    logic [NUM_ROWS-1:0][NUM_COLS-1:0] actives;
-    logic [7:0] blue_pixels [NUM_ROWS-1:0][NUM_COLS-1:0];
-    logic [7:0] green_pixels [NUM_ROWS-1:0][NUM_COLS-1:0];
-    logic [7:0] red_pixels [NUM_ROWS-1:0][NUM_COLS-1:0];
-    logic signed [NUM_ROWS-1:0][NUM_COLS-1:0][11:0] lhpos, rhpos, tvpos, bvpos;
-
-    // Alien bullet wires
-    logic [7:0] alien_bullet_pixel [0:2];
-    logic alien_bullet_active;
-    logic fire_alien_bullet;
-    logic [3:0] fire_row, fire_col;
-    logic signed [11:0] fire_x, fire_y;
-
-    assign active = |actives;
+            // Find rightmost alive
+            for (int c = NUM_COLS - 1; c >= 0; c--) begin
+                if (alien_alive[r][c]) begin
+                    rightmost_col[r] = c;
+                    break;
+                end
+            end
+        end
+    end
 
 //-----------------------------------------------------------------------------
-// Random alien bullet firing logic using LFSR-based randomness
+// Alien bullet firing logic using LFSR-based randomness
 //-----------------------------------------------------------------------------
 
 // 16-bit Linear Feedback Shift Register for randomness
@@ -161,6 +197,9 @@ always_comb begin
     fire_y = bvpos[fire_row][fire_col];               // Bottom edge
 end
 
+//-----------------------------------------------------------------------------
+// Assignments and pixel color logic
+//-----------------------------------------------------------------------------
 
     always_comb begin
         alien_pixel[0] = 8'h00;
@@ -188,35 +227,9 @@ end
         end
     end
 
-//
-    logic [$clog2(NUM_COLS)-1:0] leftmost_col [NUM_ROWS-1:0];
-    logic [$clog2(NUM_COLS)-1:0] rightmost_col [NUM_ROWS-1:0];
-
-    always_comb begin
-        for (int r = 0; r < NUM_ROWS; r++) begin
-            leftmost_col[r] = 0;
-            rightmost_col[r] = NUM_COLS - 1;
-
-            // Find leftmost alive
-            for (int c = 0; c < NUM_COLS; c++) begin
-                if (alien_alive[r][c]) begin
-                    leftmost_col[r] = c;
-                    break;
-                end
-            end
-
-            // Find rightmost alive
-            for (int c = NUM_COLS - 1; c >= 0; c--) begin
-                if (alien_alive[r][c]) begin
-                    rightmost_col[r] = c;
-                    break;
-                end
-            end
-        end
-    end
-//
-
     assign alien_hit_out = |alien_hit_array;
+    assign active = |actives;
+
 
     always_comb begin
         alien_reached_paddle = 0;
@@ -235,6 +248,10 @@ end
             end
         end
     end
+
+//-----------------------------------------------------------------------------
+// Alien and bullet instances
+//-----------------------------------------------------------------------------
 
     generate
         genvar r, c;
