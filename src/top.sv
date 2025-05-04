@@ -104,7 +104,7 @@ game_state_machine game_state_machine_inst (
 );
 
 //-----------------------------------------------------------------------------
-// Game State Machine Instantiation
+// Star Background Instantiation
 //-----------------------------------------------------------------------------
 wire [7:0] pixel_star [0:2];
 wire active_star;
@@ -119,7 +119,23 @@ star_background star_bg_inst (
     .pixel(pixel_star),
     .active(active_star)
 );
+//-----------------------------------------------------------------------------
+// Ready Up Screen Instantiation
+//-----------------------------------------------------------------------------
+wire [7:0] pixel_ready_up [0:2];
+wire use_ready_up_pixels;
 
+ready_up_screen ready_up_screen_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst),
+    .fsync(fsync),
+    .game_state(game_state),
+    .hpos(hpos),
+    .vpos(vpos),
+
+    .pixel(pixel_ready_up),                  // RGB output for scoreboard
+    .use_ready_up_pixels(use_ready_up_pixels)                 // Scoreboard is drawing here
+);
 
 //-----------------------------------------------------------------------------
 // Scoreboard Instantiation
@@ -298,6 +314,7 @@ assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] :
 // use a priority encoder to determine which pixel to use.
 
 assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] :
+                  use_ready_up_pixels ? pixel_ready_up[2] :
                   pixel_alien[2]      ? pixel_alien[2]    :
                   pixel_paddle[2]     ? pixel_paddle[2]   :
                   pixel_bullet[2]     ? pixel_bullet[2]   :
@@ -305,6 +322,7 @@ assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] :
                                         1'b0;
 
 assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] :
+                  use_ready_up_pixels ? pixel_ready_up[1] :
                   pixel_alien[1]      ? pixel_alien[1]    :
                   pixel_paddle[1]     ? pixel_paddle[1]   :
                   pixel_bullet[1]     ? pixel_bullet[1]   :
@@ -312,6 +330,7 @@ assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] :
                                         1'b0;
 
 assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] :
+                  use_ready_up_pixels ? pixel_ready_up[0] :
                   pixel_alien[0]      ? pixel_alien[0]    :
                   pixel_paddle[0]     ? pixel_paddle[0]   :
                   pixel_bullet[0]     ? pixel_bullet[0]   :
