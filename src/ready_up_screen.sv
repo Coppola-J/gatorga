@@ -12,6 +12,8 @@ module ready_up_screen (
     output logic        use_ready_up_pixels
 );
 
+// TODO: HAVE ALIENS GO ACROSS THE SCREEN AT RANDOM SPEEDS AND COLORS AND SHOOT AND DISSAPPEAR FOR IMMERSIVE READY UP SCREEN
+
     // Game state constants
     localparam logic [1:0] START_SCREEN = 2'd0;
 
@@ -19,13 +21,13 @@ module ready_up_screen (
     localparam TITLE_WIDTH  = 256;
     localparam TITLE_HEIGHT = 64;
     localparam TITLE_HSTART = (HRES - TITLE_WIDTH) >> 1;
-    localparam TITLE_VSTART = 100;
+    localparam TITLE_VSTART = 300;
 
     // READY UP positioning
     localparam READY_WIDTH  = 128;
     localparam READY_HEIGHT = 32;
     localparam READY_HSTART = (HRES - READY_WIDTH) >> 1;
-    localparam READY_VSTART = 200;
+    localparam READY_VSTART = 400;
 
     // Bitmap outputs
     wire [255:0] title_bits;
@@ -74,9 +76,14 @@ module ready_up_screen (
                         (hpos >= READY_HSTART && hpos < READY_HSTART + READY_WIDTH) &&
                         (ready_bits[READY_WIDTH - 1 - (hpos - READY_HSTART)]);
 
-    assign pixel[2] = (title_active || ready_active) ? 8'hFF : 8'h00;
-    assign pixel[1] = (title_active || ready_active) ? 8'hFF : 8'h00;
-    assign pixel[0] = (title_active || ready_active) ? 8'hFF : 8'h00;
+    assign pixel[2] = title_active ? TITLE_COLOR[23:16] :
+                      ready_active ? READY_COLOR[23:16] : 8'h00;
+
+    assign pixel[1] = title_active ? TITLE_COLOR[15:8] :
+                      ready_active ? READY_COLOR[15:8] : 8'h00;
+
+    assign pixel[0] = title_active ? TITLE_COLOR[7:0] :
+                      ready_active ? READY_COLOR[7:0] : 8'h00;
 
     assign use_ready_up_pixels = (game_state == START_SCREEN);
 

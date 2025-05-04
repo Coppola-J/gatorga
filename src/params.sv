@@ -14,6 +14,11 @@ package params;
 
     parameter PLAYABLE_AREA_H = 1280;
     parameter PLAYABLE_AREA_V = 720;
+//-----------------------------------------------------------------------------
+// Title screen
+//-----------------------------------------------------------------------------
+    parameter READY_COLOR = 24'hE5FF52; // RGB color for "READY UP" text
+    parameter TITLE_COLOR = 24'h660094; // RGB color for "READY UP" text
 
 //-----------------------------------------------------------------------------
 //  Player paddle
@@ -71,6 +76,7 @@ package params;
     parameter ALIEN_HSTART = (HRES - ((NUM_COLS * ENEMY_W) + ((NUM_COLS - 1) * SPACING_X))) / 2;
     parameter ALIEN_VSTART = (VRES - PADDLE_H - BULLET_H) - (DROP * 18);
     parameter ENEMY_BULLET_SPEED = 1;
+
 
 
 endpackage

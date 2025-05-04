@@ -87,22 +87,3 @@ module star_background #(
     end
 
 endmodule
-
-
-/*
-    // Active signal for star background
-    always_comb begin
-        active = 0;
-        for (int i = 0; i < STAR_COUNT; i++) begin
-            if (hpos == stars[i].x && vpos == stars[i].y) begin
-                active = 1;
-            end
-        end
-    end
-
-    assign pixel[2] = active ? BULLET_COLOR[23:16] : 8'h00;
-    assign pixel[1] = active ? BULLET_COLOR[15:8]  : 8'h00;
-    assign pixel[0] = active ? BULLET_COLOR[7:0]   : 8'h00;
-
-endmodule
-*/

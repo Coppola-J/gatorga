@@ -85,10 +85,10 @@ hdmi_transmit hdmi_transmit_inst(
 //-----------------------------------------------------------------------------
 logic [1:0] game_state;
 logic [4:0] current_round;
-logic game_over_SM; 
+logic alien_rst; 
 wire game_over_C; 
 
-assign game_over = game_over_SM || game_over_C; // Combine game over signals
+assign game_over = alien_rst || game_over_C; // Combine game over signals
 
 game_state_machine game_state_machine_inst (
     .pixel_clk(pixel_clk),
@@ -98,7 +98,7 @@ game_state_machine game_state_machine_inst (
     .all_aliens_dead(aliens_remaining == 0),
     .player_hit(alien_reached_paddle), // or custom signal
     .lives_remaining(2'd3), // TEMP: static value, wire up later
-    .game_over(game_over_SM),
+    .alien_rst(alien_rst),
     .game_state(game_state),
     .round(current_round)
 );
@@ -275,7 +275,7 @@ gameover_controller gameover_controller_inst (
 
 wire debug [0:2];
 assign debug[0] = bullet_active;
-assign debug[1] = game_over_SM;
+assign debug[1] = alien_rst;
 assign debug[2] = game_over_C;
 assign debug[3] = game_over;
 
@@ -314,7 +314,7 @@ assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] :
 // use a priority encoder to determine which pixel to use.
 
 assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] :
-                  use_ready_up_pixels ? pixel_ready_up[2] :
+                  use_ready_up_pixels ? pixel_ready_up[2] :        // Trying this out
                   pixel_alien[2]      ? pixel_alien[2]    :
                   pixel_paddle[2]     ? pixel_paddle[2]   :
                   pixel_bullet[2]     ? pixel_bullet[2]   :

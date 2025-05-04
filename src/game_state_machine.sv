@@ -17,7 +17,7 @@ module game_state_machine (
     input  logic        player_hit,          // alien reached paddle or bullet hit player
     input  logic [1:0]  lives_remaining,
 
-    output logic        game_over,
+    output logic        alien_rst,
     output logic [1:0]  game_state,          // Export current state
     output logic [4:0]  round
 );
@@ -87,7 +87,7 @@ always_comb begin
                 next_state = NEXT_LEVEL;
             end else begin
                 level_counter = 5'b00000;
-                game_over = 1'b1;
+                alien_rst = 1'b1;
                 // next_state = START_SCREEN; Unecessary since next_state will always be current state, unless changed
             end
         end
@@ -96,7 +96,7 @@ always_comb begin
             // Display level, increment level counter, reset aliens and increase speed, go to play game
             if (level_counter == 0) begin 
                 level_counter = level_counter + 1;
-                game_over = 1'b1;
+                alien_rst = 1'b1;
                 next_state = PLAY_GAME;
             end else begin
                 level_counter = level_counter + 1;
@@ -106,7 +106,7 @@ always_comb begin
         end
 
         PLAY_GAME: begin
-            game_over = 1'b0;
+            alien_rst = 1'b0;
             if (player_hit) begin
                 // If player is hit, decrement lives and go to game over screen if no lives left
                 if (lives_remaining == 0) begin
@@ -114,6 +114,7 @@ always_comb begin
                 end else begin
                     next_state = PLAY_GAME; // Stay in play game state
                 end
+            next_state = GAMEOVER_SCREEN;
             end else if (all_aliens_dead) begin
                 // If all aliens are dead, go to next level
                 next_state = NEXT_LEVEL;
@@ -123,15 +124,9 @@ always_comb begin
         end
 
         GAMEOVER_SCREEN: begin
-            game_over = 1'b1;
-            if (ready_latched) begin
-                // If ready_up is pressed, go back to start screen
-                next_state = START_SCREEN;
-            end else begin
-                // Stay in game over screen until ready_up is pressed
-                next_state = GAMEOVER_SCREEN; // Stay in game over state
-            end
-            // Display game over screen, wait for a bit, and go to start screen
+            alien_rst = 1'b1;
+            level_counter = 5'b00000;
+            next_state = START_SCREEN; // Reset level counter to 0
         end
     endcase
 end
