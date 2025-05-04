@@ -12,6 +12,7 @@ module top (
     input right,                 // Right button input (move paddle right)
     input left,                  // Left button input (move paddle left)
     input fire,                  // Fire button input (fire bullet)
+    input ready_up,             // Start button input (ready up)
 
     // HDMI output signals
     output tmds_tx_clk_p,
@@ -80,6 +81,69 @@ hdmi_transmit hdmi_transmit_inst(
 );
 
 //-----------------------------------------------------------------------------
+// Game State Machine Instantiation
+//-----------------------------------------------------------------------------
+logic [1:0] game_state;
+logic [4:0] current_round;
+logic game_over_SM; 
+wire game_over_C; 
+
+assign game_over = game_over_SM || game_over_C; // Combine game over signals
+
+game_state_machine game_state_machine_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst),
+    .fsync(fsync),
+    .ready_up(ready_up),
+    .all_aliens_dead(aliens_remaining == 0),
+    .player_hit(alien_reached_paddle), // or custom signal
+    .lives_remaining(2'd3), // TEMP: static value, wire up later
+    .game_over(game_over_SM),
+    .game_state(game_state),
+    .round(current_round)
+);
+
+//-----------------------------------------------------------------------------
+// Game State Machine Instantiation
+//-----------------------------------------------------------------------------
+wire [7:0] pixel_star [0:2];
+wire active_star;
+
+star_background star_bg_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst),
+    .fsync(fsync),
+    .hpos(hpos),
+    .vpos(vpos),
+    .game_state(game_state),
+    .pixel(pixel_star),
+    .active(active_star)
+);
+
+
+//-----------------------------------------------------------------------------
+// Scoreboard Instantiation
+//-----------------------------------------------------------------------------
+
+/*
+scoreboard scoreboard_inst (
+    .pixel_clk(pixel_clk),
+    .rst(rst || game_over),
+    .fsync(fsync),
+    .hpos(hpos),
+    .vpos(vpos),
+
+    .aliens_remaining(aliens_remaining), // Number of aliens remaining
+    .game_state(game_state_machine_inst.game_state), // Current game state
+    .current_round(game_state_machine_inst.current_round), // Current round number
+    .lives_remaining(game_state_machine_inst.lives_remaining), // Lives left (0–3)
+
+    .pixel(pixel_obj),                  // RGB output for scoreboard
+    .active(active_obj)                 // Scoreboard is drawing here
+);
+*/
+
+//-----------------------------------------------------------------------------
 // Paddle Instantiation
 //-----------------------------------------------------------------------------
 paddle paddle_inst (
@@ -123,6 +187,9 @@ bullet bullet_inst (
     .bullet_bottom(bullet_bottom)
 );
 
+//-----------------------------------------------------------------------------
+// Alien Group Instantiation
+//-----------------------------------------------------------------------------
 
 // New Alien group signals
 wire [$clog2(NUM_ROWS*NUM_COLS+1)-1:0] aliens_remaining;  // adjust 4x5 if needed
@@ -181,7 +248,7 @@ gameover_controller gameover_controller_inst (
     .active_paddle(active_paddle),
     .hpos(hpos),
     .vpos(vpos),
-    .game_over(game_over),
+    .game_over(game_over_C),
     .use_gameover_pixels(use_gameover_pixels),
     .pixel_gameover(pixel_gameover)
 );
@@ -192,9 +259,9 @@ gameover_controller gameover_controller_inst (
 
 wire debug [0:2];
 assign debug[0] = bullet_active;
-assign debug[1] = alien_hit;
-assign debug[2] = alien_alive;
-assign debug[3] = (bullet_left < alien_rhpos);
+assign debug[1] = game_over_SM;
+assign debug[2] = game_over_C;
+assign debug[3] = game_over;
 
 
 //-----------------------------------------------------------------------------
@@ -207,7 +274,7 @@ assign debug[3] = (bullet_left < alien_rhpos);
 //assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] : (pixel_obj[1] | pixel_paddle[1] | pixel_bullet[1] | pixel_alien[1]);
 //assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] : (pixel_obj[0] | pixel_paddle[0] | pixel_bullet[0] | pixel_alien[0]);
 
-
+/*
 assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] :
                   pixel_alien[2]      ? pixel_alien[2]    :
                   pixel_paddle[2]     ? pixel_paddle[2]   :
@@ -225,6 +292,32 @@ assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] :
                   pixel_paddle[0]     ? pixel_paddle[0]   :
                   pixel_bullet[0]     ? pixel_bullet[0]   :
                                         1'b0;
+*/
+
+// TODO: Need to do active logic here, outside of modules. Need to 
+// use a priority encoder to determine which pixel to use.
+
+assign pixel[2] = use_gameover_pixels ? pixel_gameover[2] :
+                  pixel_alien[2]      ? pixel_alien[2]    :
+                  pixel_paddle[2]     ? pixel_paddle[2]   :
+                  pixel_bullet[2]     ? pixel_bullet[2]   :
+                  pixel_star[2]       ? pixel_star[2]     :
+                                        1'b0;
+
+assign pixel[1] = use_gameover_pixels ? pixel_gameover[1] :
+                  pixel_alien[1]      ? pixel_alien[1]    :
+                  pixel_paddle[1]     ? pixel_paddle[1]   :
+                  pixel_bullet[1]     ? pixel_bullet[1]   :
+                  pixel_star[1]       ? pixel_star[1]     :
+                                        1'b0;
+
+assign pixel[0] = use_gameover_pixels ? pixel_gameover[0] :
+                  pixel_alien[0]      ? pixel_alien[0]    :
+                  pixel_paddle[0]     ? pixel_paddle[0]   :
+                  pixel_bullet[0]     ? pixel_bullet[0]   :
+                  pixel_star[0]       ? pixel_star[0]     :
+                                        1'b0;
+
 
 
 

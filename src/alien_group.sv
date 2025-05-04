@@ -59,7 +59,6 @@ module alien_group (
 
     logic signed [11:0] row_lhpos [NUM_ROWS-1:0];  // Per-row left pos
     logic row_dir [NUM_ROWS-1:0];                  // 0 = right, 1 = left
-    logic signed [11:0] group_tvpos;               // Shared vertical top position
     logic drop_flag;                               // Flag to indicate group drop
 
     // Alien wires
@@ -142,6 +141,7 @@ module alien_group (
 
 //-----------------------------------------------------------------------------
 // Alien bullet firing logic using LFSR-based randomness
+// TODO: FIX BULLETS TO CHANGE FROM RANDOM TO SEQUENTIAL AFTER HALF DEAD
 //-----------------------------------------------------------------------------
 
 // 16-bit Linear Feedback Shift Register for randomness

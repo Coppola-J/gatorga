@@ -12,6 +12,8 @@ package params;
     parameter HRES = 1280;
     parameter VRES = 720;
 
+    parameter PLAYABLE_AREA_H = 1280;
+    parameter PLAYABLE_AREA_V = 720;
 
 //-----------------------------------------------------------------------------
 //  Player paddle
